@@ -4,6 +4,9 @@ sys.path.insert(1, "./src")
 import numpy as np
 import pandas as pd
 
+from tkinter import *
+from tkinter import ttk
+
 from models import *
 
 PATH = "data/SPSectors.txt"
@@ -46,6 +49,15 @@ riskFreeReturns = SPSectors[:, 0] # risk-free asset column
 riskyReturns = SPSectors[:, 1:cols] # risky asset column, includes risk factor
 
 def main():
+    root = Tk()
+    frm = ttk.Frame(root, padding = 10)
+    frm.grid()
+
+    root.title("Testing Portfolio Optimization Methods")
+    root.geometry('600x400+50+50')
+
+    root.mainloop()
+
     T = len(riskyReturns) # time period
     nSubsets = 1 if WINDOW == T else T - WINDOW # if WINDOW is the same as time period, then we only have 1 subset
 
