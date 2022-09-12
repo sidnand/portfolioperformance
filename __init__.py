@@ -17,17 +17,17 @@ HEIGHT = 400
 
 WINDOW = UI(Tk(), TITLE, WIDTH, HEIGHT)
 
-# MODEL PARAMETERS
+# MODEL CONSTANTS
 
 PATH = "data/SPSectors.txt"
+
+PF = ["ew", "mv"]
 
 # how risk averse an investor is, gamma >= 0
 GAMMA = [1, 2, 3, 4, 5, 10]
 
 # estimation window; how long we will estimate for
 M = 120
-
-
 
 
 SPSectorsPandas = pd.read_csv(PATH, delim_whitespace = True)
@@ -44,7 +44,11 @@ def main():
     SYSTEM = System(riskFreeReturns, riskyReturns, M)
 
     WINDOW.show()
-    SYSTEM.run()
+
+    sr = SYSTEM.getSharpeRatios(PF)
+
+    print(sr["ew"])
+    print(sr["mv"])
 
 if __name__ == "__main__":
     main()

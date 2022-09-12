@@ -22,25 +22,21 @@ class System:
         self.COLS = 1 + np.shape(risky)[1]
         self.N = self.COLS - 1 # number of risky variables
 
-        # portfolio policies
-        self.pf = {
-            "ew" : np.empty((self.N, self.ROWS - self.M)),
-            "mv" : np.empty((self.N, self.ROWS - self.M))
-        }
+    """
+        Computes the sharpe ratios of all the portfolio policies
 
-        # portfolio weights before rebalancing
-        self.pfBuyHold = {
-            "ew" : np.empty((self.N, self.ROWS - self.M)),
-            "mv" : np.empty((self.N, self.ROWS - self.M))
-        }
+        returns : Object of floas denoting the sharpe ratio of each portfolio policy
+    """
+    def getSharpeRatios(self, PF):
+        w = {} # portfolio policy weights
+        wBuyHold = {} # portfolio weights before rebalancing
+        outSample = {} # out of sample returns
 
-        # out of sample returns
-        self.outSample = {
-            "ew" : np.empty((1, self.ROWS - self.M)),
-            "mv" : np.empty((1, self.ROWS - self.M))
-        }
+        for i in PF:
+            w[i] = np.empty((self.N, self.ROWS - self.M))
+            wBuyHold[i] = np.empty((self.N, self.ROWS - self.M))
+            outSample[i] = np.empty((1, self.ROWS - self.M))
 
-    def run(self):
         T = len(self.risky) # time period
         nSubsets = 1 if self.M == T else T - self.M # if M is the same as time period, then we only have 1 subset
 
@@ -64,30 +60,31 @@ class System:
             
             # 1/N
             alphaTew = ew(self.COLS)
-            self.pf["ew"][:, shift] = alphaTew[:, 0]
+            w["ew"][:, shift] = alphaTew[:, 0]
             
             # mean-variance
             alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
-            self.pf["mv"][:, shift] = alphaMV[:, 0]
+            w["mv"][:, shift] = alphaMV[:, 0]
 
             # buy and hold
             if shift == 0:
-                self.pfBuyHold["ew"][:, shift]= alphaTew[:, 0]
-                self.pfBuyHold["mv"][:, shift]= alphaMV[:, 0]
+                wBuyHold["ew"][:, shift]= alphaTew[:, 0]
+                wBuyHold["mv"][:, shift]= alphaMV[:, 0]
             else:
-                self.pfBuyHold["ew"][:, shift] = self.buyHold(self.pf["ew"][:, shift - 1], shift)
-                self.pfBuyHold["mv"][:, shift] = self.buyHold(self.pf["mv"][:, shift - 1], shift)
+                wBuyHold["ew"][:, shift] = self.buyHold(w["ew"][:, shift - 1], shift)
+                wBuyHold["mv"][:, shift] = self.buyHold(w["mv"][:, shift - 1], shift)
                 
             if (nSubsets > 1):
             # out of sample returns
-                self.outSample["ew"][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                self.outSample["mv"][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample["ew"][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
+                outSample["mv"][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
 
-        sr = self.sharpeRato(self.outSample["ew"])
-        mv = self.sharpeRato(self.outSample["mv"])
+        sharpeRatios = {
+            "ew" : self.sharpeRato(outSample["ew"]),
+            "mv" : self.sharpeRato(outSample["mv"])
+        }
 
-        print(sr)
-        print(mv)
+        return sharpeRatios
 
     """
 
