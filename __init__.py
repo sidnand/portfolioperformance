@@ -43,12 +43,17 @@ riskyReturns = SPSectors[:, 1:COLS] # risky asset column, includes risk factor
 def main():
     SYSTEM = System(riskFreeReturns, riskyReturns, M)
 
-    WINDOW.show()
+    # WINDOW.show()
 
     sr = SYSTEM.getSharpeRatios(PF)
+    
+    keys = np.array([list(sr.keys())])
+    values = np.array([list(sr.values())])
+    data = np.vstack((keys, values))
 
-    print(sr["ew"])
-    print(sr["mv"])
+    WINDOW.table(data)
+
+    WINDOW.show()
 
 if __name__ == "__main__":
     main()
