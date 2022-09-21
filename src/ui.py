@@ -21,7 +21,7 @@ class UI:
         frm.grid()
 
     """
-        SHOWS THE WINDOW
+        Showa the window
     """
     def show(self):
         self.root.mainloop()

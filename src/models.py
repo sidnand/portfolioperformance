@@ -1,6 +1,7 @@
 # CODE FOR ALL THE PORTFOLIO MODELS
 
 import numpy as np
+from util import quadprog
 
 """
    Computes the weight of each asset in the portfolio, where each asset weight is 1/N,
@@ -14,6 +15,7 @@ def ew(n):
 
 """
    Computes the minimum variance portfolio weights
+   To learn more: https://www.youtube.com/watch?v=krm6upwkg0M
 
    param invSigmaMLE : the inverse of the MLE of the covariance matrix
    param AMLE : integer value which is equal to invSigmaMLE * invSigmaMLE transpose
@@ -22,3 +24,20 @@ def ew(n):
 """
 def minVar(invSigmaMLE, AMLE, n):
    return 1/AMLE * invSigmaMLE.dot(np.ones((n - 1, 1)))
+
+"""
+   Computes the minimum variance portfolio weights with constraints
+   This uses quadratic programming: https://en.wikipedia.org/wiki/Quadratic_programming
+   To learn more: https://www.youtube.com/watch?v=oaiiyIsbNdI, https://www.youtube.com/watch?v=GZb9647X8sg
+
+   param sigmaMLE : MLE of the covariance matrix
+"""
+def minVarConstrained(sigmaMlE):
+   m, n = sigmaMlE.shape
+   ub = np.ones((1, n))
+   aeq = np.ones((1, n))
+   beq = 1
+   lb= np.zeros((1, n))
+   f = np.zeros((n, 1))
+
+   return quadprog(sigmaMlE, f, Aeq = aeq, beq = beq, lb = lb, ub = ub)

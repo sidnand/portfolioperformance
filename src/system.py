@@ -56,32 +56,38 @@ class System:
             invSigmaMLE = np.linalg.inv(sigmaMLE)
 
             AMLE = np.ones((1, self.COLS - 1)).dot(invSigmaMLE).dot(np.ones((self.COLS - 1, 1)))
-            alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
             
-            # 1/N
+            # 0: 1/N
             alphaTew = ew(self.COLS)
             w["ew"][:, shift] = alphaTew[:, 0]
             
-            # mean-variance
+            # 5: minimum-variance
             alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
-            w["mv"][:, shift] = alphaMV[:, 0]
+            w["minvar"][:, shift] = alphaMV[:, 0]
+
+            minVarCon = minVarConstrained(sigmaMLE)
+            w["minvar-constrained"][:, shift] = minVarCon[:, 0]
 
             # buy and hold
             if shift == 0:
                 wBuyHold["ew"][:, shift]= alphaTew[:, 0]
-                wBuyHold["mv"][:, shift]= alphaMV[:, 0]
+                wBuyHold["minvar"][:, shift]= alphaMV[:, 0]
+                wBuyHold["minvar-constrained"][:, shift] = minVarCon[:, 0]
             else:
                 wBuyHold["ew"][:, shift] = self.buyHold(w["ew"][:, shift - 1], shift)
-                wBuyHold["mv"][:, shift] = self.buyHold(w["mv"][:, shift - 1], shift)
+                wBuyHold["minvar"][:, shift] = self.buyHold(w["minvar"][:, shift - 1], shift)
+                wBuyHold["minvar-constrained"][:, shift] = self.buyHold(w["minvar-constrained"][:, shift - 1], shift)
                 
             if (nSubsets > 1):
             # out of sample returns
                 outSample["ew"][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                outSample["mv"][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample["minvar"][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample["minvar-constrained"][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
 
         sharpeRatios = {
             "ew" : self.sharpeRato(outSample["ew"]),
-            "mv" : self.sharpeRato(outSample["mv"])
+            "minvar" : self.sharpeRato(outSample["minvar"]),
+            "minvar-constrained" : self.sharpeRato(outSample["minvar-constrained"])
         }
 
         return sharpeRatios
