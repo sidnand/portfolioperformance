@@ -8,6 +8,7 @@ from tkinter import *
 
 from ui import *
 from system import *
+from enum_policy import *
 
 # UI CONSTANTS
 
@@ -43,7 +44,7 @@ riskyReturns = SPSectors[:, 1:COLS] # risky asset column, includes risk factor
 def main():
     SYSTEM = System(riskFreeReturns, riskyReturns, M)
 
-    sr = SYSTEM.getSharpeRatios(PF)
+    sr = SYSTEM.getSharpeRatios()
     
     keys = np.array([list(sr.keys())])
     values = np.array([list(sr.values())])

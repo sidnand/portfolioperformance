@@ -3,6 +3,7 @@
 import numpy as np
 
 from models import *
+from enum_policy import *
 
 class System:
     
@@ -27,15 +28,15 @@ class System:
 
         returns : Object of floas denoting the sharpe ratio of each portfolio policy
     """
-    def getSharpeRatios(self, PF):
+    def getSharpeRatios(self):
         w = {} # portfolio policy weights
         wBuyHold = {} # portfolio weights before rebalancing
         outSample = {} # out of sample returns
 
-        for i in PF:
-            w[i] = np.empty((self.N, self.ROWS - self.M))
-            wBuyHold[i] = np.empty((self.N, self.ROWS - self.M))
-            outSample[i] = np.empty((1, self.ROWS - self.M))
+        for i in Policy:
+            w[i.value] = np.empty((self.N, self.ROWS - self.M))
+            wBuyHold[i.value] = np.empty((self.N, self.ROWS - self.M))
+            outSample[i.value] = np.empty((1, self.ROWS - self.M))
 
         T = len(self.risky) # time period
         nSubsets = 1 if self.M == T else T - self.M # if M is the same as time period, then we only have 1 subset
@@ -59,36 +60,40 @@ class System:
             
             # 0: 1/N
             alphaTew = ew(self.COLS)
-            w["ew"][:, shift] = alphaTew[:, 0]
+            w[Policy.EW][:, shift] = alphaTew[:, 0]
             
             # 5: minimum-variance
             alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
-            w["minvar"][:, shift] = alphaMV[:, 0]
+            w[Policy.MINIMUN_VAR][:, shift] = alphaMV[:, 0]
 
             minVarCon = minVarConstrained(sigmaMLE)
-            w["minvar-constrained"][:, shift] = minVarCon[:, 0]
+            w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
 
             # buy and hold
             if shift == 0:
-                wBuyHold["ew"][:, shift]= alphaTew[:, 0]
-                wBuyHold["minvar"][:, shift]= alphaMV[:, 0]
-                wBuyHold["minvar-constrained"][:, shift] = minVarCon[:, 0]
+                wBuyHold[Policy.EW][:, shift]= alphaTew[:, 0]
+                wBuyHold[Policy.MINIMUN_VAR][:, shift]= alphaMV[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
             else:
-                wBuyHold["ew"][:, shift] = self.buyHold(w["ew"][:, shift - 1], shift)
-                wBuyHold["minvar"][:, shift] = self.buyHold(w["minvar"][:, shift - 1], shift)
-                wBuyHold["minvar-constrained"][:, shift] = self.buyHold(w["minvar-constrained"][:, shift - 1], shift)
+                wBuyHold[Policy.EW][:, shift] = self.buyHold(w["ew"][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUN_VAR][:, shift] = self.buyHold(w["minvar"][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w["minvar-constrained"][:, shift - 1], shift)
                 
             if (nSubsets > 1):
             # out of sample returns
-                outSample["ew"][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                outSample["minvar"][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
-                outSample["minvar-constrained"][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
+                outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
+                outSample[Policy.MINIMUN_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
 
-        sharpeRatios = {
-            "ew" : self.sharpeRato(outSample["ew"]),
-            "minvar" : self.sharpeRato(outSample["minvar"]),
-            "minvar-constrained" : self.sharpeRato(outSample["minvar-constrained"])
-        }
+        sharpeRatios = {}
+        for i in Policy:
+            sharpeRatios[i.value] = self.sharpeRato(outSample[i.value])
+
+        # sharpeRatios = {
+        #     Policy.EW : self.sharpeRato(outSample[Policy.EW]),
+        #     Policy.MINIMUN_VAR : self.sharpeRato(outSample[Policy.MINIMUN_VAR]),
+        #     Policy.MINIMUM_VAR_CONSTRAINED : self.sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED])
+        # }
 
         return sharpeRatios
 
