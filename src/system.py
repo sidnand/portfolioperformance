@@ -1,5 +1,7 @@
 # CODE FOR RUNNING THE MODELS USING THE DATA
 
+import math
+
 import numpy as np
 
 from models import *
@@ -64,36 +66,37 @@ class System:
             
             # 5: minimum-variance
             alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
-            w[Policy.MINIMUN_VAR][:, shift] = alphaMV[:, 0]
+            w[Policy.MINIMUM_VAR][:, shift] = alphaMV[:, 0]
 
+            # 10: minimum-variance shortsell constraints
             minVarCon = minVarConstrained(sigmaMLE)
             w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
+
+            minVarGCon = jagannathanMa(sigmaMLE)
+            w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
 
             # buy and hold
             if shift == 0:
                 wBuyHold[Policy.EW][:, shift]= alphaTew[:, 0]
-                wBuyHold[Policy.MINIMUN_VAR][:, shift]= alphaMV[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMV[:, 0]
                 wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
             else:
-                wBuyHold[Policy.EW][:, shift] = self.buyHold(w["ew"][:, shift - 1], shift)
-                wBuyHold[Policy.MINIMUN_VAR][:, shift] = self.buyHold(w["minvar"][:, shift - 1], shift)
-                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w["minvar-constrained"][:, shift - 1], shift)
+                wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift - 1], shift)
                 
             if (nSubsets > 1):
             # out of sample returns
                 outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                outSample[Policy.MINIMUN_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
                 outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarGCon, shift)[:, 0]
 
         sharpeRatios = {}
         for i in Policy:
-            sharpeRatios[i.value] = self.sharpeRato(outSample[i.value])
-
-        # sharpeRatios = {
-        #     Policy.EW : self.sharpeRato(outSample[Policy.EW]),
-        #     Policy.MINIMUN_VAR : self.sharpeRato(outSample[Policy.MINIMUN_VAR]),
-        #     Policy.MINIMUM_VAR_CONSTRAINED : self.sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED])
-        # }
+            sharpeRatios[i.value] = round(self.sharpeRato(outSample[i.value]), 4)
 
         return sharpeRatios
 
