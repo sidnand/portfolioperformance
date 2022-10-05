@@ -32,7 +32,6 @@ class UI:
 
         for i in range(rows):
             for j in range(cols):
-                print("Value at i and j : ", data[i, j])
                 b = Entry(self.root)
                 b.grid(row=i, column=j)
                 b.insert(END, data[i, j])
