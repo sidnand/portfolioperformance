@@ -48,6 +48,8 @@ class System:
             riskySubset = self.risky[shift:self.M + shift, :]
             riskFreeSubset = self.riskFree[shift:self.M + shift]
             subset = np.column_stack((riskFreeSubset, riskySubset))
+
+            nRisky = len(riskySubset)
             
             mu = np.array([np.mean(riskFreeSubset)])
             mu = np.append(mu, np.vstack(riskySubset.mean(axis = 0)))
@@ -69,11 +71,15 @@ class System:
             w[Policy.MINIMUM_VAR][:, shift] = alphaMV[:, 0]
 
             # 10: minimum-variance shortsell constraints
-            minVarCon = minVarConstrained(sigmaMLE)
+            minVarCon = minVarShortSellCon(sigmaMLE)
             w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
 
+            # 11: minimum-variance generalized constraints
             minVarGCon = jagannathanMa(sigmaMLE)
             w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
+
+            # 12 : Kan and Zhou’s (2007) “three-fund” model
+            alphaKanZhouEw = kanZhouEw(nRisky, self.M, sigmaMLE)
 
             # buy and hold
             if shift == 0:
@@ -81,11 +87,13 @@ class System:
                 wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMV[:, 0]
                 wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
                 wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
+                wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
             else:
                 wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift - 1], shift)
+                wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = self.buyHold(w[Policy.KAN_ZHOU_EW][:, shift - 1], shift)
                 
             if (nSubsets > 1):
             # out of sample returns
@@ -93,6 +101,7 @@ class System:
                 outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
                 outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
                 outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarGCon, shift)[:, 0]
+                outSample[Policy.KAN_ZHOU_EW][:, shift] = self.outOfSampleReturns(alphaKanZhouEw, shift)[:, 0]
 
         sharpeRatios = {}
         for i in Policy:
