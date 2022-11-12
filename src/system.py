@@ -10,11 +10,9 @@ from enum_policy import *
 class System:
     
     """
-    
-        param riskFree : [m x 1] array of risk free assets
-        param risky : [m x n] array of risky assets
+        param riskFree : [M x 1] array of risk free assets
+        param risky : [M x N] array of risky assets
         param M : estimation window length
-    
     """
     def __init__(self, riskFree, risky, M):
         self.riskFree = riskFree
@@ -55,7 +53,7 @@ class System:
             mu = np.append(mu, np.vstack(riskySubset.mean(axis = 0)))
             
             totalSigma = np.cov(subset.T)
-            sigma = (self.M - 1) / (self.M - self.N - 1 - 2) * np.cov(riskySubset.T)
+            sigma = (self.M - 1) / (self.M - self.N - 2) * np.cov(riskySubset.T)
             
             sigmaMLE = (self.M - 1) / self.M * np.cov(riskySubset.T)
             invSigmaMLE = np.linalg.inv(sigmaMLE)
@@ -75,11 +73,12 @@ class System:
             w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
 
             # 11: minimum-variance generalized constraints
-            minVarGCon = jagannathanMa(sigmaMLE)
+            minVarGCon = jagannathanMa(sigma)
             w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
 
             # 12 : Kan and Zhou’s (2007) “three-fund” model
-            alphaKanZhouEw = kanZhouEw(nRisky, self.M, sigmaMLE)
+            alphaKanZhouEw = kanZhouEw(self.N, self.M, sigma)
+            w[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
 
             # buy and hold
             if shift == 0:

@@ -22,8 +22,6 @@ WINDOW = UI(Tk(), TITLE, WIDTH, HEIGHT)
 
 PATH = "data/SPSectors.txt"
 
-# PF = ["ew", "minvar", "minvar-constrained"]
-
 # how risk averse an investor is, gamma >= 0
 GAMMA = [1, 2, 3, 4, 5, 10]
 

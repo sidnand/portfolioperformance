@@ -1,6 +1,7 @@
 # CODE FOR ALL THE PORTFOLIO MODELS
 import numpy as np
 from util import *
+import math
 
 """
 Computes the weight of each asset in the portfolio, where each asset weight is 1/N,
@@ -31,16 +32,14 @@ def minVar(invSigmaMLE, AMLE, n):
 
 
 """
-Computes the minimum variance portfolio weights with constraints
+Computes the minimum variance portfolio weights with short sell constraints
 This uses quadratic programming: https://en.wikipedia.org/wiki/Quadratic_programming
 To learn more: https://www.youtube.com/watch?v=oaiiyIsbNdI, https://www.youtube.com/watch?v=GZb9647X8sg
 
 param sigmaMLE : MLE of the covariance matrix
 
 """
-
-
-def minVarConstrained(sigmaMLE):
+def minVarShortSellCon(sigmaMLE):
 
    m, n = sigmaMLE.shape
    ub = np.ones((1, n))
@@ -55,15 +54,40 @@ def minVarConstrained(sigmaMLE):
    return solverArr
 
 
-def jagannathanMa(sigmaMLE):
-   m, n = sigmaMLE.shape
+"""
+Computes the minimum variance portfolio weights with constraints
+This uses quadratic programming: https://en.wikipedia.org/wiki/Quadratic_programming
+To learn more: https://www.youtube.com/watch?v=oaiiyIsbNdI, https://www.youtube.com/watch?v=GZb9647X8sg
+
+param sigmaMLE : MLE of the covariance matrix
+
+"""
+def jagannathanMa(sigma):
+   m, n = sigma.shape
    ub = np.ones((1, n))
    aeq = np.ones((1, n))
    beq = [1]
    lb = np.ones((1, n)) / (2 * n)
    f = np.zeros((n, 1))
 
-   solver = quadprog(sigmaMLE, f, aeq, beq, lb, ub)
+   solver = quadprog(sigma, f, aeq, beq, lb, ub)
    solverArr = np.asarray(solver)
 
    return solverArr
+
+def kanZhouEw(N, M, sigma):
+   invSigmaMLE = np.linalg.inv(sigma)
+
+   esige = (np.ones((1, N)) @ sigma @ np.ones((N, 1)))[0][0]
+   einvsige = (np.ones((1, N)) @ invSigmaMLE @ np.ones((N, 1)))[0][0]
+
+   k = (M^2 * (M-2)) / ((M-N-1) * (M-N-2) * (M-N-4))
+
+   d = ((M - N - 2) * esige * einvsige - N**2 * M)/(N**2 * (M - N - 2) * k * einvsige - 2 * M * N**2 * einvsige + (M - N - 2) * einvsige**2 * esige)
+   c = 1 - d * einvsige
+
+   # alpha = c * 1 / N * np.ones((N,1)) + d * invSigmaMLE @ np.ones((N,1))
+
+   alpha = (c * (1 / N) * np.ones((N,1))) + ((d * invSigmaMLE) @ np.ones((N,1)))
+
+   return alpha
