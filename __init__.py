@@ -1,22 +1,6 @@
-import sys
-sys.path.insert(1, "./src")
-
-import numpy as np
 import pandas as pd
 
-from tkinter import *
-
-from ui import *
-from system import *
-from enum_policy import *
-
-# UI CONSTANTS
-
-TITLE = "Testing Portfolio Optimization Methods"
-WIDTH = 600
-HEIGHT = 400
-
-WINDOW = UI(Tk(), TITLE, WIDTH, HEIGHT)
+from src.system import *
 
 # MODEL CONSTANTS
 
@@ -27,7 +11,6 @@ GAMMA = [1, 2, 3, 4, 5, 10]
 
 # estimation window; how long we will estimate for
 M = 120
-
 
 SPSectorsPandas = pd.read_csv(PATH, delim_whitespace = True)
 
@@ -43,14 +26,8 @@ def main():
     SYSTEM = System(riskFreeReturns, riskyReturns, M)
 
     sr = SYSTEM.getSharpeRatios()
-    
-    keys = np.array([list(sr.keys())])
-    values = np.array([list(sr.values())])
-    data = np.vstack((keys, values))
 
-    WINDOW.table(data)
-
-    WINDOW.show()
+    print(sr)
 
 if __name__ == "__main__":
     main()
