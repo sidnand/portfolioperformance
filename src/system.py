@@ -4,6 +4,7 @@ import numpy as np
 
 from src.m import *
 from src.models.ew import EqualWeightModel
+from src.models.minVar import MinVariance
 
 class System:
     
@@ -15,6 +16,7 @@ class System:
     def __init__(self, riskFree, risky, M):
         self.policies = [
             EqualWeightModel(),
+            MinVariance()
         ]
 
         self.riskFree = riskFree
@@ -59,8 +61,8 @@ class System:
 
             nRisky = len(riskySubset)
             
-            mu = np.array([np.mean(riskFreeSubset)])
-            mu = np.append(mu, np.vstack(riskySubset.mean(axis = 0)))
+            mu_horz = np.array([np.mean(riskFreeSubset)])
+            mu = np.append(mu_horz, np.vstack(riskySubset.mean(axis = 0)))
             
             totalSigma = np.cov(subset.T)
             sigma = (self.M - 1) / (self.M - self.N - 2) * np.cov(riskySubset.T)
@@ -82,10 +84,6 @@ class System:
             for i in self.policies:
                 alpha = i.run(data)
                 w[i.__str__()][:, shift] = alpha[:, 0]
-            
-            # 0: 1/N
-            # alphaTew = ew(self.COLS)
-            # w[Policy.EW][:, shift] = alphaTew[:, 0]
             
             # # 5: minimum-variance
             # alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
