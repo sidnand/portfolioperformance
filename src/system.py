@@ -5,6 +5,9 @@ import numpy as np
 from src.m import *
 from src.models.ew import EqualWeightModel
 from src.models.minVar import MinVariance
+from src.models.minVarShortSellCon import MinVarianceShortSellCon
+from src.models.jagannathanMa import JagannathanMa
+from src.models.kanZhouEw import KanZhouEqualWeight
 
 class System:
     
@@ -16,7 +19,10 @@ class System:
     def __init__(self, riskFree, risky, M):
         self.policies = [
             EqualWeightModel(),
-            MinVariance()
+            MinVariance(),
+            MinVarianceShortSellCon(),
+            JagannathanMa(),
+            KanZhouEqualWeight()
         ]
 
         self.riskFree = riskFree
@@ -74,6 +80,7 @@ class System:
 
             data = dict(
                 cols = self.COLS,
+                sigma = sigma,
                 invSigmaMLE = invSigmaMLE,
                 sigmaMLE = sigmaMLE,
                 AMLE = AMLE,
