@@ -3,6 +3,7 @@ import inspect
 class Model():
     def __init__(self, **kwargs):
         self._name = None
+        self._description = None
         self._kwargs = kwargs
 
     def _run(self, **kwargs):
@@ -17,3 +18,6 @@ class Model():
 
     def __str__(self):
         return self._name
+
+    def __description__(self):
+        return self._description
