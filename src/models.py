@@ -1,7 +1,6 @@
 # CODE FOR ALL THE PORTFOLIO MODELS
 import numpy as np
-from util import *
-import math
+from .utils import quadprog
 
 """
 Computes the weight of each asset in the portfolio, where each asset weight is 1/N,
@@ -91,3 +90,6 @@ def kanZhouEw(N, M, sigma):
    alpha = (c * (1 / N) * np.ones((N,1))) + ((d * invSigmaMLE) @ np.ones((N,1)))
 
    return alpha
+
+def meanVariance(gamma, invSigmaMLE, mu):
+   return (1/gamma) * invSigmaMLE * mu[2:]

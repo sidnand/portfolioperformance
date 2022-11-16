@@ -2,12 +2,8 @@
 
 import numpy as np
 
-from src.m import *
-from src.models.ew import EqualWeightModel
-from src.models.minVar import MinVariance
-from src.models.minVarShortSellCon import MinVarianceShortSellCon
-from src.models.jagannathanMa import JagannathanMa
-from src.models.kanZhouEw import KanZhouEqualWeight
+from .models import *
+from .enum_policy import Policy
 
 class System:
     
@@ -17,14 +13,6 @@ class System:
         param M : estimation window length
     """
     def __init__(self, riskFree, risky, M):
-        self.policies = [
-            EqualWeightModel(),
-            MinVariance(),
-            MinVarianceShortSellCon(),
-            JagannathanMa(),
-            KanZhouEqualWeight()
-        ]
-
         self.riskFree = riskFree
         self.risky = risky
         self.M = M
@@ -32,9 +20,6 @@ class System:
         self.ROWS = len(riskFree)
         self.COLS = 1 + np.shape(risky)[1]
         self.N = self.COLS - 1 # number of risky variables
-
-    def addPolicy(self, model):
-        self.policies.append(model)
 
     """
         Computes the sharpe ratios of all the portfolio policies
@@ -46,10 +31,10 @@ class System:
         wBuyHold = {} # portfolio weights before rebalancing
         outSample = {} # out of sample returns
 
-        # for i in Policy:
-        #     w[i.value] = np.empty((self.N, self.ROWS - self.M))
-        #     wBuyHold[i.value] = np.empty((self.N, self.ROWS - self.M))
-        #     outSample[i.value] = np.empty((1, self.ROWS - self.M))
+        for i in Policy:
+            w[i.value] = np.empty((self.N, self.ROWS - self.M))
+            wBuyHold[i.value] = np.empty((self.N, self.ROWS - self.M))
+            outSample[i.value] = np.empty((1, self.ROWS - self.M))
 
         for i in self.policies:
             w[i.__str__()] = np.empty((self.N, self.ROWS - self.M))
@@ -78,67 +63,49 @@ class System:
 
             AMLE = np.ones((1, self.COLS - 1)).dot(invSigmaMLE).dot(np.ones((self.COLS - 1, 1)))
 
-            data = dict(
-                cols = self.COLS,
-                sigma = sigma,
-                invSigmaMLE = invSigmaMLE,
-                sigmaMLE = sigmaMLE,
-                AMLE = AMLE,
-                N = self.N,
-                M = self.M
-            )
-
-            for i in self.policies:
-                alpha = i.run(data)
-                w[i.__str__()][:, shift] = alpha[:, 0]
+            # 0: 1/N
+            alphaTew = ew(self.COLS)
+            w[Policy.EW][:, shift] = alphaTew[:, 0]
             
-            # # 5: minimum-variance
-            # alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
-            # w[Policy.MINIMUM_VAR][:, shift] = alphaMV[:, 0]
+            # 5: minimum-variance
+            alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
+            w[Policy.MINIMUM_VAR][:, shift] = alphaMV[:, 0]
 
-            # # 10: minimum-variance shortsell constraints
-            # minVarCon = minVarShortSellCon(sigmaMLE)
-            # w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
+            # 10: minimum-variance shortsell constraints
+            minVarCon = minVarShortSellCon(sigmaMLE)
+            w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
 
-            # # 11: minimum-variance generalized constraints
-            # minVarGCon = jagannathanMa(sigma)
-            # w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
+            # 11: minimum-variance generalized constraints
+            minVarGCon = jagannathanMa(sigma)
+            w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
 
-            # # 12 : Kan and Zhou’s (2007) “three-fund” model
-            # alphaKanZhouEw = kanZhouEw(self.N, self.M, sigma)
-            # w[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
+            # 12 : Kan and Zhou’s (2007) “three-fund” model
+            alphaKanZhouEw = kanZhouEw(self.N, self.M, sigma)
+            w[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
 
             # MEAN-VARIANCE Models
 
             # buy and hold
             if shift == 0:
-                for i in self.policies:
-                    alpha = i.run(data)
-                    w[i.__str__()][:, shift] = alpha[:, 0]
-                # wBuyHold[Policy.EW][:, shift]= alphaTew[:, 0]
-                # wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMV[:, 0]
-                # wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
-                # wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
-                # wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
+                wBuyHold[Policy.EW][:, shift]= alphaTew[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMV[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
+                wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
             else:
-                for i in self.policies:
-                    wBuyHold[i.__str__()][:, shift] = self.buyHold(w[i.__str__()][:, shift - 1], shift)
-                # wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
-                # wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
-                # wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift - 1], shift)
-                # wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift - 1], shift)
-                # wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = self.buyHold(w[Policy.KAN_ZHOU_EW][:, shift - 1], shift)
+                wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift - 1], shift)
+                wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift - 1], shift)
+                wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = self.buyHold(w[Policy.KAN_ZHOU_EW][:, shift - 1], shift)
                 
             if (nSubsets > 1):
                 # out of sample returns
-                for i in self.policies:
-                    alpha = i.run(data)
-                    outSample[i.__str__()][:, shift] = self.outOfSampleReturns(alpha, shift)[:, 0]
-                # outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                # outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
-                # outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
-                # outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarGCon, shift)[:, 0]
-                # outSample[Policy.KAN_ZHOU_EW][:, shift] = self.outOfSampleReturns(alphaKanZhouEw, shift)[:, 0]
+                outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarGCon, shift)[:, 0]
+                outSample[Policy.KAN_ZHOU_EW][:, shift] = self.outOfSampleReturns(alphaKanZhouEw, shift)[:, 0]
 
         sharpeRatios = {}
         for i in self.policies:
