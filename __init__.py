@@ -27,9 +27,10 @@ riskyReturns = SPSectors[:, 1:COLS] # risky asset column, includes risk factor
 def main():
     SYSTEM = System(riskFreeReturns, riskyReturns, M)
 
-    sr = SYSTEM.getSharpeRatios()
+    sr = SYSTEM.getSharpeRatios(GAMMA)
 
-    print(sr)
+    for key, value in sr.items():
+        print(key, value)
 
 if __name__ == "__main__":
     main()

@@ -26,7 +26,7 @@ class System:
 
         returns : Object of floas denoting the sharpe ratio of each portfolio policy
     """
-    def getSharpeRatios(self):
+    def getSharpeRatios(self, gamma):
         w = {} # portfolio policy weights
         wBuyHold = {} # portfolio weights before rebalancing
         outSample = {} # out of sample returns
@@ -35,11 +35,6 @@ class System:
             w[i.value] = np.empty((self.N, self.ROWS - self.M))
             wBuyHold[i.value] = np.empty((self.N, self.ROWS - self.M))
             outSample[i.value] = np.empty((1, self.ROWS - self.M))
-
-        for i in self.policies:
-            w[i.__str__()] = np.empty((self.N, self.ROWS - self.M))
-            wBuyHold[i.__str__()] = np.empty((self.N, self.ROWS - self.M))
-            outSample[i.__str__()] = np.empty((1, self.ROWS - self.M))
 
         T = len(self.risky) # time period
         nSubsets = 1 if self.M == T else T - self.M # if M is the same as time period, then we only have 1 subset
@@ -83,7 +78,11 @@ class System:
             alphaKanZhouEw = kanZhouEw(self.N, self.M, sigma)
             w[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
 
-            # MEAN-VARIANCE Models
+            for i in gamma:
+                #  : Mean Variance
+                alphaMV = meanVariance(i, invSigmaMLE, mu)
+                wBuyHold[Policy.MEAN_VARIANCE][:, shift]= alphaMV[:, 0]
+                outSample[Policy.MEAN_VARIANCE][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
 
             # buy and hold
             if shift == 0:
@@ -92,13 +91,17 @@ class System:
                 wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
                 wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
                 wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
+
+                wBuyHold[Policy.MEAN_VARIANCE][:, shift] = alphaMV[:, 0]
             else:
                 wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift - 1], shift)
                 wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = self.buyHold(w[Policy.KAN_ZHOU_EW][:, shift - 1], shift)
-                
+
+                wBuyHold[Policy.MEAN_VARIANCE][:, shift] = self.buyHold(w[Policy.MEAN_VARIANCE][:, shift - 1], shift)
+
             if (nSubsets > 1):
                 # out of sample returns
                 outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
@@ -108,8 +111,13 @@ class System:
                 outSample[Policy.KAN_ZHOU_EW][:, shift] = self.outOfSampleReturns(alphaKanZhouEw, shift)[:, 0]
 
         sharpeRatios = {}
-        for i in self.policies:
-            sharpeRatios[i.__str__()] = round(self.sharpeRato(outSample[i.__str__()]), 4)
+
+        sharpeRatios[Policy.EW] = round(self.sharpeRato(outSample[Policy.EW]), 4)
+        sharpeRatios[Policy.MINIMUM_VAR] = round(self.sharpeRato(outSample[Policy.MINIMUM_VAR]), 4)
+        sharpeRatios[Policy.MINIMUM_VAR_CONSTRAINED] = round(self.sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED]), 4)
+        sharpeRatios[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = round(self.sharpeRato(outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED]), 4)
+        sharpeRatios[Policy.KAN_ZHOU_EW] = round(self.sharpeRato(outSample[Policy.KAN_ZHOU_EW]), 4)
+        sharpeRatios[Policy.MEAN_VARIANCE] = round(self.sharpeRato(outSample[Policy.MEAN_VARIANCE]), 4)
 
         return sharpeRatios
 
