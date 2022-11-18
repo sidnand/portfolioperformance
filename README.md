@@ -6,3 +6,7 @@ This is a tool to test the out-of-sample performance using the Sharpe ratio of d
 
 * Equal weighted model
 * Mean-varaince model
+* Mean-varaince short-sell constraints model
+* Jagannathan Ma model
+* Kan Zhou equal wighted model
+* Mean variance model

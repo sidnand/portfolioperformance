@@ -7,7 +7,8 @@ from src.system import *
 
 # MODEL CONSTANTS
 
-PATH = "data/SPSectors.txt"
+PATH = "data/old/SPSectors.txt"
+# PATH = "data/new/SPSectors.txt"
 
 # how risk averse an investor is, gamma >= 0
 GAMMA = [1, 2, 3, 4, 5, 10]
