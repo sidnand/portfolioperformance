@@ -7,19 +7,14 @@ from .enum_policy import Policy
 
 class System:
     
-    """
-        param riskFree : [M x 1] array of risk free assets
-        param risky : [M x N] array of risky assets
-        param M : estimation window length
-    """
-    def __init__(self, riskFree, risky, M):
-        self.riskFree = riskFree
-        self.risky = risky
-        self.M = M
+    def __init__(self, data, T):
+        (self.m, self.n) = data.shape
 
-        self.ROWS = len(riskFree)
-        self.COLS = 1 + np.shape(risky)[1]
-        self.N = self.COLS - 1 # number of risky variables
+        self.riskFreeReturns = data[:, 0] # risk-free asset column
+        self.riskyReturns = data[:, 1:self.n] # risky asset column, includes risk factor
+        self.T = T # estimation window length
+
+        self.nRisky = self.n - 1 # number of risky variables
 
     """
         Computes the sharpe ratios of all the portfolio policies
@@ -32,17 +27,17 @@ class System:
         outSample = {} # out of sample returns
 
         for i in Policy:
-            w[i.value] = np.empty((self.N, self.ROWS - self.M))
-            wBuyHold[i.value] = np.empty((self.N, self.ROWS - self.M))
-            outSample[i.value] = np.empty((1, self.ROWS - self.M))
+            w[i.value] = np.empty((self.nRisky, self.m - self.T))
+            wBuyHold[i.value] = np.empty((self.nRisky, self.m - self.T))
+            outSample[i.value] = np.empty((1, self.m - self.T))
 
-        T = len(self.risky) # time period
-        nSubsets = 1 if self.M == T else T - self.M # if M is the same as time period, then we only have 1 subset
+        T = len(self.riskyReturns) # time period
+        nSubsets = 1 if self.T == T else T - self.T # if M is the same as time period, then we only have 1 subset
 
         for shift in range(0, nSubsets):
 
-            riskySubset = self.risky[shift:self.M + shift, :]
-            riskFreeSubset = self.riskFree[shift:self.M + shift]
+            riskySubset = self.riskyReturns[shift:self.T + shift, :]
+            riskFreeSubset = self.riskFreeReturns[shift:self.T + shift]
             subset = np.column_stack((riskFreeSubset, riskySubset))
 
             nRisky = len(riskySubset)
@@ -51,20 +46,20 @@ class System:
             mu = np.append(mu_horz, np.vstack(riskySubset.mean(axis = 0)))
             
             totalSigma = np.cov(subset.T)
-            sigma = (self.M - 1) / (self.M - self.N - 2) * np.cov(riskySubset.T)
+            sigma = (self.T - 1) / (self.T - self.nRisky - 2) * np.cov(riskySubset.T)
             
-            sigmaMLE = (self.M - 1) / self.M * np.cov(riskySubset.T)
+            sigmaMLE = (self.T - 1) / self.T * np.cov(riskySubset.T)
             invSigmaMLE = np.linalg.inv(sigmaMLE)
 
-            AMLE = np.ones((1, self.COLS - 1)).dot(invSigmaMLE).dot(np.ones((self.COLS - 1, 1)))
+            AMLE = np.ones((1, self.n - 1)) @ invSigmaMLE @ np.ones((self.n - 1, 1))
 
             # 0: 1/N
-            alphaTew = ew(self.COLS)
+            alphaTew = ew(self.n)
             w[Policy.EW][:, shift] = alphaTew[:, 0]
             
             # 5: minimum-variance
-            alphaMV = minVar(invSigmaMLE, AMLE, self.COLS)
-            w[Policy.MINIMUM_VAR][:, shift] = alphaMV[:, 0]
+            alphaMinV = minVar(invSigmaMLE, AMLE, self.n)
+            w[Policy.MINIMUM_VAR][:, shift] = alphaMinV[:, 0]
 
             # 10: minimum-variance shortsell constraints
             minVarCon = minVarShortSellCon(sigmaMLE)
@@ -75,24 +70,23 @@ class System:
             w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
 
             # 12 : Kan and Zhou’s (2007) “three-fund” model
-            alphaKanZhouEw = kanZhouEw(self.N, self.M, sigma)
+            alphaKanZhouEw = kanZhouEw(self.nRisky, self.T, sigma)
             w[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
 
             for i in gamma:
                 #  : Mean Variance
-                alphaMV = meanVariance(i, invSigmaMLE, mu)
-                wBuyHold[Policy.MEAN_VARIANCE][:, shift]= alphaMV[:, 0]
-                outSample[Policy.MEAN_VARIANCE][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                alphaMeanV = meanVar(i, invSigmaMLE, mu)
+                wBuyHold[Policy.MEAN_VARIANCE][:, shift]= alphaMeanV[:, 0]
 
             # buy and hold
             if shift == 0:
                 wBuyHold[Policy.EW][:, shift]= alphaTew[:, 0]
-                wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMV[:, 0]
+                wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMinV[:, 0]
                 wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
                 wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
                 wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
 
-                wBuyHold[Policy.MEAN_VARIANCE][:, shift] = alphaMV[:, 0]
+                wBuyHold[Policy.MEAN_VARIANCE][:, shift] = alphaMeanV[:, 0]
             else:
                 wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
                 wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
@@ -105,19 +99,20 @@ class System:
             if (nSubsets > 1):
                 # out of sample returns
                 outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMV, shift)[:, 0]
+                outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMinV, shift)[:, 0]
                 outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
                 outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarGCon, shift)[:, 0]
                 outSample[Policy.KAN_ZHOU_EW][:, shift] = self.outOfSampleReturns(alphaKanZhouEw, shift)[:, 0]
+                outSample[Policy.MEAN_VARIANCE][:, shift] = self.outOfSampleReturns(alphaMeanV, shift)[:, 0]
 
         sharpeRatios = {}
 
-        sharpeRatios[Policy.EW] = round(self.sharpeRato(outSample[Policy.EW]), 4)
-        sharpeRatios[Policy.MINIMUM_VAR] = round(self.sharpeRato(outSample[Policy.MINIMUM_VAR]), 4)
-        sharpeRatios[Policy.MINIMUM_VAR_CONSTRAINED] = round(self.sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED]), 4)
-        sharpeRatios[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = round(self.sharpeRato(outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED]), 4)
-        sharpeRatios[Policy.KAN_ZHOU_EW] = round(self.sharpeRato(outSample[Policy.KAN_ZHOU_EW]), 4)
-        sharpeRatios[Policy.MEAN_VARIANCE] = round(self.sharpeRato(outSample[Policy.MEAN_VARIANCE]), 4)
+        sharpeRatios[Policy.EW] = self.sharpeRato(outSample[Policy.EW])
+        sharpeRatios[Policy.MINIMUM_VAR] = self.sharpeRato(outSample[Policy.MINIMUM_VAR])
+        sharpeRatios[Policy.MINIMUM_VAR_CONSTRAINED] = self.sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED])
+        sharpeRatios[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = self.sharpeRato(outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED])
+        sharpeRatios[Policy.KAN_ZHOU_EW] = self.sharpeRato(outSample[Policy.KAN_ZHOU_EW])
+        sharpeRatios[Policy.MEAN_VARIANCE] = self.sharpeRato(outSample[Policy.MEAN_VARIANCE])
 
         return sharpeRatios
 
@@ -129,11 +124,11 @@ class System:
     """
     def buyHold(self, w, j):
 
-        a = (1 - sum(w)) * (1 + self.riskFree[self.M + j])
-        b = (1 + (self.risky[self.M + j, :].T + self.riskFree[self.M + j]))[np.newaxis].T
+        a = (1 - sum(w)) * (1 + self.riskFreeReturns[self.T + j])
+        b = (1 + (self.riskyReturns[self.T + j, :].T + self.riskFreeReturns[self.T + j]))[np.newaxis].T
         trp = a + w[np.newaxis].dot(b)
         
-        return ((w * (1 + (self.risky[self.M + j, :]).T + self.riskFree[self.M + j])) / trp)
+        return ((w * (1 + (self.riskyReturns[self.T + j, :]).T + self.riskFreeReturns[self.T + j])) / trp)
 
     """
         Computes the out of sample returns
@@ -142,7 +137,7 @@ class System:
         param j : integer value, represents current shift position
     """
     def outOfSampleReturns(self, w, j):
-        return w.T.dot(self.risky[self.M + j, :][np.newaxis].T)
+        return w.T.dot(self.riskyReturns[self.T + j, :][np.newaxis].T)
 
     """
         Computes the Sharpe ratio

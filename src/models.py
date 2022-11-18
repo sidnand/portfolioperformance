@@ -12,7 +12,7 @@ returns : [n - 1, 1] array, where each element is 1/N
 
 
 def ew(n):
-   return 1/n * np.ones((n - 1, 1))
+   return (1/n) * np.ones((n - 1, 1))
 
 
 """
@@ -27,7 +27,7 @@ returns : [n - 1, 1] array of the minimum variance portfolio weights
 
 
 def minVar(invSigmaMLE, AMLE, n):
-   return 1/AMLE * invSigmaMLE.dot(np.ones((n - 1, 1)))
+   return (1/AMLE) * invSigmaMLE @ np.ones((n - 1, 1))
 
 
 """
@@ -77,20 +77,21 @@ def jagannathanMa(sigma):
 def kanZhouEw(N, M, sigma):
    invSigmaMLE = np.linalg.inv(sigma)
 
-   esige = (np.ones((1, N)) @ sigma @ np.ones((N, 1)))[0][0]
-   einvsige = (np.ones((1, N)) @ invSigmaMLE @ np.ones((N, 1)))[0][0]
+   esige_matrix = (np.ones((1, N)) @ sigma @ np.ones((N, 1)))
+   einvsige_matrix = (np.ones((1, N)) @ invSigmaMLE @ np.ones((N, 1)))
 
-   k = (M^2 * (M-2)) / ((M-N-1) * (M-N-2) * (M-N-4))
+   esige = esige_matrix[0][0]
+   einvsige = einvsige_matrix[0][0]
+
+   k = (M**2 * (M-2)) / ((M-N-1) * (M-N-2) * (M-N-4))
 
    d = ((M - N - 2) * esige * einvsige - N**2 * M)/(N**2 * (M - N - 2) * k * einvsige - 2 * M * N**2 * einvsige + (M - N - 2) * einvsige**2 * esige)
    c = 1 - d * einvsige
-
-   # alpha = c * 1 / N * np.ones((N,1)) + d * invSigmaMLE @ np.ones((N,1))
 
    alpha = (c * (1 / N) * np.ones((N,1))) + ((d * invSigmaMLE) @ np.ones((N,1)))
 
    return alpha
 
-def meanVariance(gamma, invSigmaMLE, mu):
+def meanVar(gamma, invSigmaMLE, mu):
    alpha = (1/gamma) * invSigmaMLE @ mu[1:]
    return alpha.reshape(alpha.shape[0],-1)

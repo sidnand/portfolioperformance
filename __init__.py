@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import pandas as pd
+import random
 
 from src.system import *
 
@@ -12,7 +13,7 @@ PATH = "data/SPSectors.txt"
 GAMMA = [1, 2, 3, 4, 5, 10]
 
 # estimation window; how long we will estimate for
-M = 120
+T = 120
 
 SPSectorsPandas = pd.read_csv(PATH, delim_whitespace = True)
 
@@ -21,16 +22,13 @@ SPSectors = SPSectorsPandas.to_numpy()[:, 1:]
 
 COLS = SPSectors.shape[1]
 
-riskFreeReturns = SPSectors[:, 0] # risk-free asset column
-riskyReturns = SPSectors[:, 1:COLS] # risky asset column, includes risk factor
-
 def main():
-    SYSTEM = System(riskFreeReturns, riskyReturns, M)
+    SYSTEM = System(SPSectors, T)
 
     sr = SYSTEM.getSharpeRatios(GAMMA)
 
     for key, value in sr.items():
-        print(key, value)
+        print("{}: {}".format(key, round(value, 4)))
 
 if __name__ == "__main__":
     main()
