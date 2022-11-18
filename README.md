@@ -10,3 +10,9 @@ This is a tool to test the out-of-sample performance using the Sharpe ratio of d
 * Jagannathan Ma model
 * Kan Zhou equal wighted model
 * Mean variance model
+
+## Data
+
+``` bash
+    data/new/orig/sp_sector # contains the uncleaned data from various industries in the S&P500
+```

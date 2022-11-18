@@ -2,3 +2,5 @@
 .ipynb_checkpoints/
 __pycache__/
 vscode.code-workspace
+misc/
+matlab_playground/
