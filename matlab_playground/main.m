@@ -69,6 +69,26 @@ for k = 1:length(Window)
         invSigma = inv(Sigma);
         A = ones(1,nRisky)*invSigma*ones(nRisky,1);
 
+        %Collect mean and variances
+        forecastMuMLE(j,:) = mu';
+        forecastSigmaMLE(:,:,j) = Sigma;
+        detSigmaMLE(j) = det(Sigma);
+        condSigmaMLE(j) = cond(Sigma);
+        
+        %Bayes-Stein moments (From Jorion, JFQA 1896, pp. 285-286)
+        Y = mu(2:end);
+        SigmaHat = (nPoints-1)/(nPoints-nRisky -2)*cov(rRisky_subset);
+        invSigmaHat = inv(SigmaHat);
+        Ahat = ones(1,nRisky)*invSigmaHat*ones(nRisky,1);
+        Y0 = (ones(1,nRisky)*invSigmaHat*Y)/Ahat;
+        w = (nRisky+2)/((nRisky+2) + (Y-Y0)'*nPoints*invSigmaHat*(Y-Y0));
+        lambda = (nRisky+2)/((Y-Y0)'*invSigmaHat*(Y-Y0));
+        muBS = [mean(rRiskfree_subset);(1-w)*Y + w*Y0];
+        SigmaBS = SigmaHat*(1+1/(nPoints+lambda)) + lambda/(nPoints*(nPoints+1+lambda))*ones(nRisky,1)*ones(1,nRisky)/Ahat;
+        invSigmaBS = inv(SigmaBS);
+        totalSigmaBS = (nPoints-1)/(nPoints-n-2)*totalSigma;
+        bsPhi(j) = w;
+
         %Equal weight policy
         % MODEL 0
         alphaTew     = 1/n*ones(n-1,1);
@@ -117,6 +137,47 @@ for k = 1:length(Window)
             xrp.jm(:,j)      = dgu_static_outSample(alphaJM, rRisky, M,j);
         end
 
+        % Loop for gamma
+        for i=1:nRRA
+
+            gam = gamma_values(i);
+            
+            %MEAN-VARIANCE
+            alphaMV   = 1/gam*invSigma*(mu(2:end));
+            pf.MV(:,j,i) = alphaMV;
+            xrp.mv(i,j)   = dgu_static_outSample(alphaMV, rRisky,M,j);
+
+
+            %Buy and Hold
+            if j==1
+                pfBuyHold.MV(:,j,i) = alphaMV;
+            else
+                pfBuyHold.MV(:,j,i) = dgu_static_buyhold(pf.MV(:,j-1,i),j,M, rRiskfree, rRisky);
+            end
+
+        end
+
+    end
+
+    meanPhi = mean(bsPhi);
+    stdPhi = std(bsPhi);
+    
+    if nSubsets>1
+        
+        %---------------------------------------------
+        % 4. OUT-OF-SAMPLE PERFORMANCE
+        %---------------------------------------------
+        %BUY-AND-HOLD OUT OF SAMPLE RETURNS
+        
+        returns = [1+rRiskfree(M+1:end,:),1+rRisky(M+1:end,:)+repmat(rRiskfree(M+1:end,:),1,n-1)];
+        
+        xrp.ewbh      = dgu_static_buyholdRet(pfBuyHold.ew(:,1),returns, M, n, T,nRRA);
+        xrp.minvbh    = dgu_static_buyholdRet(pfBuyHold.MinVar(:,1),returns, M, n, T,nRRA);
+        xrp.minvbhCon = dgu_static_buyholdRet(pfBuyHold.MinVarCon(:,1),returns, M, n, T,nRRA);
+        xrp.kz1Nbh    = dgu_static_buyholdRet(pfBuyHold.KZ1N(:,1),returns, M, n, T,nRRA);
+        xrp.jmbh      = dgu_static_buyholdRet(pfBuyHold.JM(:,1),returns, M, n, T,nRRA);
+        
+        xrp.mvbh      = dgu_static_buyholdRet(pfBuyHold.MV(:,1,:),returns, M, n, T,nRRA);
     end
 
 end
@@ -129,5 +190,6 @@ end
 [mn.minvCon,  stdev.minvCon,  sr.minvCon]   = dgu_static_SharpeRatios(xrp.minvCon);
 [mn.kz1N,     stdev.kz1N,     sr.kz1N]      = dgu_static_SharpeRatios(xrp.kz1N);
 [mn.jm,       stdev.jm,       sr.jm]        = dgu_static_SharpeRatios(xrp.jm);
+[mn.mv,       stdev.mv,       sr.mv]        = dgu_static_SharpeRatios(xrp.mv);
 
 disp(sr)
