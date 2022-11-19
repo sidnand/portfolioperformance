@@ -12,11 +12,12 @@ relWritePath = "../data/new/clean"
 def readData(filename):
     # read csv file
     data = np.genfromtxt(filename, delimiter=',', skip_header=1)
+    # date is int
     return data
 
-def percentageChange(x, y):
-    # return percentage change
-    return (y - x) / x
+def percentageChange(open, close):
+    # return percentage change as a percentage
+    return (close - open) / open
 
 def processData(data):
     newData = percentageChange(data[:, OPEN], data[:, ADJ_CLOSE])
