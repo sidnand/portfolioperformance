@@ -20,7 +20,6 @@ def process(sector):
     header = read[1]
 
     tBill = data[1:, 1]
-
     indices = data[1:, 2:]
 
     # compute difference between each indices and tBill
@@ -37,4 +36,5 @@ def process(sector):
 
     np.savetxt(outdir + "/" + sector + ".csv", data, delimiter=',', fmt='%s', header=header, comments='')
 
-process("sp_sector")
+def process_data():
+    process("sp_sector")

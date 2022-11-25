@@ -50,4 +50,5 @@ def processSector(readPath, sector, writePath):
 
         np.savetxt(outdir + "/" + file, data, delimiter=',', fmt='%s', header="date,change", comments='')
 
-processSector(relReadPath, "sp_sector", relWritePath)
+def clean_data():
+    processSector(relReadPath, "sp_sector", relWritePath)

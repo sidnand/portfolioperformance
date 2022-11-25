@@ -32,5 +32,6 @@ def download(symbols, interval, start, end, path, folderName):
         data.index = data.index.astype(int)
         data.to_csv(outdir + "/" + key + ".csv")
 
-# download sp500 sector data
-download(sp_sectors, "1mo", "1999-01-01", "2021-01-01", relWritePath, "sp_sector")
+def get_data():
+    # download sp500 sector data
+    download(sp_sectors, "1mo", "1999-01-01", "2021-01-01", relWritePath, "sp_sector")

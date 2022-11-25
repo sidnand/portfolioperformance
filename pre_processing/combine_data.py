@@ -47,4 +47,5 @@ def combineData(sector):
     
     np.savetxt(outdir + "/" + sector + ".csv", data, delimiter=',', fmt='%s', header=header, comments='')
 
-combineData("sp_sector")
+def combine_data():
+    combineData("sp_sector")
