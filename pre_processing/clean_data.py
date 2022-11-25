@@ -19,10 +19,15 @@ def percentageChange(open, close):
     # return percentage change as a percentage
     return (close - open) / open
 
-def processData(data):
-    newData = percentageChange(data[:, OPEN], data[:, ADJ_CLOSE])
-    newData = np.column_stack((data[:, DATE], newData))
-    return newData
+def processData(data, tBill=False):
+    if (tBill):
+        data[:, ADJ_CLOSE] = data[:, ADJ_CLOSE] / 100
+        newData = np.column_stack((data[:, DATE], data[:, ADJ_CLOSE]))
+        return newData
+    else:
+        newData = percentageChange(data[:, OPEN], data[:, ADJ_CLOSE])
+        newData = np.column_stack((data[:, DATE], newData))
+        return newData
 
 def processSector(readPath, sector, writePath):
     indir = os.path.join(scriptDir, readPath, sector)
@@ -33,8 +38,12 @@ def processSector(readPath, sector, writePath):
     for file in files:
         # read data
         data = readData(indir + "/" + file)
-        # process data
-        data = processData(data)
+
+        if file[:6] == "T_BILL":
+            data = processData(data, True)
+        else:
+            data = processData(data)
+        
         # create new file and save data
         if not os.path.exists(outdir):
             os.mkdir(outdir)
