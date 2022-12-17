@@ -5,6 +5,8 @@ import numpy as np
 from .models import *
 from .enum_policy import Policy
 
+from .utils.statistics import *
+
 class System:
     
     def __init__(self, data, T):
@@ -107,12 +109,12 @@ class System:
 
         sharpeRatios = {}
 
-        sharpeRatios[Policy.EW] = self.sharpeRato(outSample[Policy.EW])
-        sharpeRatios[Policy.MINIMUM_VAR] = self.sharpeRato(outSample[Policy.MINIMUM_VAR])
-        sharpeRatios[Policy.MINIMUM_VAR_CONSTRAINED] = self.sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED])
-        sharpeRatios[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = self.sharpeRato(outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED])
-        sharpeRatios[Policy.KAN_ZHOU_EW] = self.sharpeRato(outSample[Policy.KAN_ZHOU_EW])
-        sharpeRatios[Policy.MEAN_VARIANCE] = self.sharpeRato(outSample[Policy.MEAN_VARIANCE])
+        sharpeRatios[Policy.EW] = sharpeRato(outSample[Policy.EW])
+        sharpeRatios[Policy.MINIMUM_VAR] = sharpeRato(outSample[Policy.MINIMUM_VAR])
+        sharpeRatios[Policy.MINIMUM_VAR_CONSTRAINED] = sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED])
+        sharpeRatios[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = sharpeRato(outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED])
+        sharpeRatios[Policy.KAN_ZHOU_EW] = sharpeRato(outSample[Policy.KAN_ZHOU_EW])
+        sharpeRatios[Policy.MEAN_VARIANCE] = sharpeRato(outSample[Policy.MEAN_VARIANCE])
 
         return sharpeRatios
 
@@ -138,21 +140,3 @@ class System:
     """
     def outOfSampleReturns(self, w, j):
         return w.T.dot(self.riskyReturns[self.T + j, :][np.newaxis].T)
-
-    """
-        Computes the Sharpe ratio
-
-        param x : [1, rows - M] array, holds the out of sample return values
-
-        returns : real number
-    """
-    def sharpeRato(self, x):
-        mean = np.mean(x.T)
-        std = np.std(x.T, ddof = 1)
-        
-        if (abs(mean) > pow(10, -16)):
-            sr = mean / std;
-        else:
-            sr = None
-                
-        return sr

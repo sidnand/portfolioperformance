@@ -35,9 +35,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# SPSectorsPandas_old = pd.read_csv(PATH_OLD, delim_whitespace = True)
-# SPSectors_old = SPSectorsPandas_old.to_numpy()
-
-# SPSectorsPandas_new = pd.read_csv(PATH, delim_whitespace = True)
-# SPSectors_new = SPSectorsPandas_new.to_numpy()
