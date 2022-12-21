@@ -9,6 +9,8 @@ import numpy as np
 """
 
 def sharpeRato(x):
+    # convert to numpy array
+    x = np.array(x)
     mean = np.mean(x.T)
     std = np.std(x.T, ddof = 1)
     
