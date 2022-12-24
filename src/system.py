@@ -9,134 +9,125 @@ from .utils.statistics import *
 
 class System:
     
-    def __init__(self, data, T):
+    def __init__(self, data, timeHorizon):
         (self.m, self.n) = data.shape
 
         self.riskFreeReturns = data[:, 0] # risk-free asset column
         self.riskyReturns = data[:, 1:self.n] # risky asset column, includes risk factor
-        self.T = T # estimation window length
+        self.timeHorizon = timeHorizon # estimation window length
 
         self.nRisky = self.n - 1 # number of risky variables
 
-    """
-        Computes the sharpe ratios of all the portfolio policies
-
-        returns : Object of floas denoting the sharpe ratio of each portfolio policy
-    """
     def getSharpeRatios(self, gamma):
         w = {} # portfolio policy weights
         wBuyHold = {} # portfolio weights before rebalancing
         outSample = {} # out of sample returns
 
         for i in Policy:
-            w[i.value] = np.empty((self.nRisky, self.m - self.T))
-            wBuyHold[i.value] = np.empty((self.nRisky, self.m - self.T))
-            outSample[i.value] = np.empty((1, self.m - self.T))
+            w[i.value] = np.empty((self.nRisky, self.m - self.timeHorizon[-1]))
+            wBuyHold[i.value] = np.empty((self.nRisky, self.m - self.timeHorizon[-1]))
+            outSample[i.value] = np.empty((1, self.m - self.timeHorizon[-1]))
 
         T = len(self.riskyReturns) # time period
-        nSubsets = 1 if self.T == T else T - self.T # if M is the same as time period, then we only have 1 subset
+        upperM = self.timeHorizon[-1] # upper bound of time horizon
 
-        for shift in range(0, nSubsets):
-
-            riskySubset = self.riskyReturns[shift:self.T + shift, :]
-            riskFreeSubset = self.riskFreeReturns[shift:self.T + shift]
-            subset = np.column_stack((riskFreeSubset, riskySubset))
-
-            nRisky = len(riskySubset)
+        for k in self.timeHorizon:
+            M = k # time horizon
+            shift = upperM - M # shift in time horizon
+            M = M + shift # update time horizon
             
-            mu_horz = np.array([np.mean(riskFreeSubset)])
-            mu = np.append(mu_horz, np.vstack(riskySubset.mean(axis = 0)))
-            
-            totalSigma = np.cov(subset.T)
-            sigma = (self.T - 1) / (self.T - self.nRisky - 2) * np.cov(riskySubset.T)
-            
-            sigmaMLE = (self.T - 1) / self.T * np.cov(riskySubset.T)
-            invSigmaMLE = np.linalg.inv(sigmaMLE)
+            nSubsets = 1 if M == T else T - M # if M is the same as time period, then we only have 1 subset
 
-            AMLE = np.ones((1, self.n - 1)) @ invSigmaMLE @ np.ones((self.n - 1, 1))
+            for j in range(0, nSubsets):
 
-            # 0: 1/N
-            alphaTew = ew(self.n)
-            w[Policy.EW][:, shift] = alphaTew[:, 0]
-            
-            # 5: minimum-variance
-            alphaMinV = minVar(invSigmaMLE, AMLE, self.n)
-            w[Policy.MINIMUM_VAR][:, shift] = alphaMinV[:, 0]
+                riskySubset = self.riskyReturns[j+shift:M+j-1, :]
+                riskFreeSubset = self.riskFreeReturns[j+shift:M+j-1]
+                subset = np.column_stack((riskFreeSubset, riskySubset))
 
-            # 10: minimum-variance shortsell constraints
-            minVarCon = minVarShortSellCon(sigmaMLE)
-            w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
+                nRisky = len(riskySubset)
+                
+                mu_horz = np.array([np.mean(riskFreeSubset)])
+                mu = np.append(mu_horz, np.vstack(riskySubset.mean(axis = 0)))
+                
+                totalSigma = np.cov(subset.T)
+                sigma = (M - 1) / (M - self.nRisky - 2) * np.cov(riskySubset.T)
+                
+                sigmaMLE = (M - 1) / M * np.cov(riskySubset.T)
+                invSigmaMLE = np.linalg.inv(sigmaMLE)
 
-            # 11: minimum-variance generalized constraints
-            minVarGCon = jagannathanMa(sigma)
-            w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
+                AMLE = np.ones((1, self.nRisky)) @ invSigmaMLE @ np.ones((self.nRisky, 1))
 
-            # 12 : Kan and Zhou’s (2007) “three-fund” model
-            alphaKanZhouEw = kanZhouEw(self.nRisky, self.T, sigma)
-            w[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
+                # 0: 1/N
+                alphaTew = ew(self.n)
+                w[Policy.EW][:, j] = alphaTew[:, 0]
+                
+                # 5: minimum-variance
+                alphaMinV = minVar(invSigmaMLE, AMLE, self.n)
+                w[Policy.MINIMUM_VAR][:, j] = alphaMinV[:, 0]
 
-            for i in gamma:
-                #  : Mean Variance
-                alphaMeanV = meanVar(i, invSigmaMLE, mu)
-                wBuyHold[Policy.MEAN_VARIANCE][:, shift]= alphaMeanV[:, 0]
+                # 10: minimum-variance shortsell constraints
+                minVarCon = minVarShortSellCon(sigmaMLE)
+                w[Policy.MINIMUM_VAR_CONSTRAINED][:, j] = minVarCon[:, 0]
 
-            # buy and hold
-            if shift == 0:
-                wBuyHold[Policy.EW][:, shift]= alphaTew[:, 0]
-                wBuyHold[Policy.MINIMUM_VAR][:, shift]= alphaMinV[:, 0]
-                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = minVarCon[:, 0]
-                wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = minVarGCon[:, 0]
-                wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = alphaKanZhouEw[:, 0]
+                # 11: minimum-variance generalized constraints
+                minVarGCon = jagannathanMa(sigma)
+                w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, j] = minVarGCon[:, 0]
 
-                wBuyHold[Policy.MEAN_VARIANCE][:, shift] = alphaMeanV[:, 0]
-            else:
-                wBuyHold[Policy.EW][:, shift] = self.buyHold(w[Policy.EW][:, shift - 1], shift)
-                wBuyHold[Policy.MINIMUM_VAR][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR][:, shift - 1], shift)
-                wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, shift - 1], shift)
-                wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift - 1], shift)
-                wBuyHold[Policy.KAN_ZHOU_EW][:, shift] = self.buyHold(w[Policy.KAN_ZHOU_EW][:, shift - 1], shift)
+                # 12 : Kan and Zhou’s (2007) “three-fund” model
+                alphaKanZhouEw = kanZhouEw(self.nRisky, M, sigma)
+                w[Policy.KAN_ZHOU_EW][:, j] = alphaKanZhouEw[:, 0]
 
-                wBuyHold[Policy.MEAN_VARIANCE][:, shift] = self.buyHold(w[Policy.MEAN_VARIANCE][:, shift - 1], shift)
+                for i in gamma:
+                    #  : Mean Variance
+                    alphaMeanV = meanVar(i, invSigmaMLE, mu)
+                    wBuyHold[Policy.MEAN_VARIANCE][:, j]= alphaMeanV[:, 0]
 
-            if (nSubsets > 1):
-                # out of sample returns
-                outSample[Policy.EW][:, shift] = self.outOfSampleReturns(alphaTew, shift)[:, 0]
-                outSample[Policy.MINIMUM_VAR][:, shift] = self.outOfSampleReturns(alphaMinV, shift)[:, 0]
-                outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarCon, shift)[:, 0]
-                outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, shift] = self.outOfSampleReturns(minVarGCon, shift)[:, 0]
-                outSample[Policy.KAN_ZHOU_EW][:, shift] = self.outOfSampleReturns(alphaKanZhouEw, shift)[:, 0]
-                outSample[Policy.MEAN_VARIANCE][:, shift] = self.outOfSampleReturns(alphaMeanV, shift)[:, 0]
+                # buy and hold
+                if j == 0:
+                    wBuyHold[Policy.EW][:, j]= alphaTew[:, 0]
+                    wBuyHold[Policy.MINIMUM_VAR][:, j]= alphaMinV[:, 0]
+                    wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, j] = minVarCon[:, 0]
+                    wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, j] = minVarGCon[:, 0]
+                    wBuyHold[Policy.KAN_ZHOU_EW][:, j] = alphaKanZhouEw[:, 0]
 
-        sharpeRatios = {}
+                    wBuyHold[Policy.MEAN_VARIANCE][:, j] = alphaMeanV[:, 0]
+                else:
+                    wBuyHold[Policy.EW][:, j] = self.buyHold(w[Policy.EW][:, j - 1], j, M)
+                    wBuyHold[Policy.MINIMUM_VAR][:, j] = self.buyHold(w[Policy.MINIMUM_VAR][:, j - 1], j, M)
+                    wBuyHold[Policy.MINIMUM_VAR_CONSTRAINED][:, j] = self.buyHold(w[Policy.MINIMUM_VAR_CONSTRAINED][:, j - 1], j, M)
+                    wBuyHold[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, j] = self.buyHold(w[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, j - 1], j, M)
+                    wBuyHold[Policy.KAN_ZHOU_EW][:, j] = self.buyHold(w[Policy.KAN_ZHOU_EW][:, j - 1], j, M)
 
-        sharpeRatios[Policy.EW] = sharpeRato(outSample[Policy.EW])
-        sharpeRatios[Policy.MINIMUM_VAR] = sharpeRato(outSample[Policy.MINIMUM_VAR])
-        sharpeRatios[Policy.MINIMUM_VAR_CONSTRAINED] = sharpeRato(outSample[Policy.MINIMUM_VAR_CONSTRAINED])
-        sharpeRatios[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = sharpeRato(outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED])
-        sharpeRatios[Policy.KAN_ZHOU_EW] = sharpeRato(outSample[Policy.KAN_ZHOU_EW])
-        sharpeRatios[Policy.MEAN_VARIANCE] = sharpeRato(outSample[Policy.MEAN_VARIANCE])
+                    wBuyHold[Policy.MEAN_VARIANCE][:, j] = self.buyHold(w[Policy.MEAN_VARIANCE][:, j - 1], j, M)
 
-        return sharpeRatios
+                if (nSubsets > 1):
+                    # out of sample returns
+                    outSample[Policy.EW][:, j] = self.outOfSampleReturns(alphaTew, j, M)[:, 0]
+                    outSample[Policy.MINIMUM_VAR][:, j] = self.outOfSampleReturns(alphaMinV, j, M)[:, 0]
+                    outSample[Policy.MINIMUM_VAR_CONSTRAINED][:, j] = self.outOfSampleReturns(minVarCon, j, M)[:, 0]
+                    outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED][:, j] = self.outOfSampleReturns(minVarGCon, j, M)[:, 0]
+                    outSample[Policy.KAN_ZHOU_EW][:, j] = self.outOfSampleReturns(alphaKanZhouEw, j, M)[:, 0]
+                    outSample[Policy.MEAN_VARIANCE][:, j] = self.outOfSampleReturns(alphaMeanV, j, M)[:, 0]
 
-    """
-        Computes a new portfolio weight after a shift
+        statistics = {}
 
-        param w : [n, row - M] array, holds portfolio weights of a specific policy
-        param j : integer value, represents current shift position
-    """
-    def buyHold(self, w, j):
+        benchmark = outSample[Policy.EW]
 
-        a = (1 - sum(w)) * (1 + self.riskFreeReturns[self.T + j])
-        b = (1 + (self.riskyReturns[self.T + j, :].T + self.riskFreeReturns[self.T + j]))[np.newaxis].T
+        statistics[Policy.EW] = getStats(benchmark, benchmark, nSubsets)
+        statistics[Policy.MINIMUM_VAR] = getStats(benchmark, outSample[Policy.MINIMUM_VAR], nSubsets)
+        statistics[Policy.MINIMUM_VAR_CONSTRAINED] = getStats(benchmark, outSample[Policy.MINIMUM_VAR_CONSTRAINED], nSubsets)
+        statistics[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED] = getStats(benchmark, outSample[Policy.MINIMUM_VAR_GENERALIZED_CONSTRAINED], nSubsets)
+        statistics[Policy.KAN_ZHOU_EW] = getStats(benchmark, outSample[Policy.KAN_ZHOU_EW], nSubsets)
+        # statistics[Policy.MEAN_VARIANCE] = getStats(outSample[Policy.MEAN_VARIANCE])
+
+        return statistics
+
+    def buyHold(self, w, j, M):
+        a = (1 - sum(w)) * (1 + self.riskFreeReturns[M + j])
+        b = (1 + (self.riskyReturns[M + j, :].T + self.riskFreeReturns[M + j]))[np.newaxis].T
         trp = a + w[np.newaxis].dot(b)
         
-        return ((w * (1 + (self.riskyReturns[self.T + j, :]).T + self.riskFreeReturns[self.T + j])) / trp)
+        return ((w * (1 + (self.riskyReturns[M + j, :]).T + self.riskFreeReturns[M + j])) / trp)
 
-    """
-        Computes the out of sample returns
-
-        param w : [n, row - M] array, holds portfolio weights of a specific policy
-        param j : integer value, represents current shift position
-    """
-    def outOfSampleReturns(self, w, j):
-        return w.T.dot(self.riskyReturns[self.T + j, :][np.newaxis].T)
+    def outOfSampleReturns(self, w, j, M):
+        return w.T.dot(self.riskyReturns[M + j, :][np.newaxis].T)
