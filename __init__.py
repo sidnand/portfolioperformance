@@ -13,7 +13,7 @@ PATH = "data/new/processed/sp_sector.csv"
 GAMMA = [1, 2, 3, 4, 5, 10]
 
 # Time horizon
-TIME_HORIZON = 120
+TIME_HORIZON = [60, 120]
 
 SPSectorsPandas = pd.read_table(PATH, sep = ",")
 SPSectorsPandasOld = pd.read_table(PATH_OLD, sep = "\s+")
@@ -30,11 +30,12 @@ def main() -> None:
 
     sr = SYSTEM.getSharpeRatios(GAMMA)
 
-    # print(sr)
-
     for key, value in sr.items():
-        # print("{}: {}".format(key, round(value, 4)))
-        print("{}: {}".format(key, value))
+        print('Policy: ', key.value)
+
+        for k, v in value.items():
+            print("{} : {}".format(k, round(v, 4)))
+        print()
 
 
 if __name__ == "__main__":
