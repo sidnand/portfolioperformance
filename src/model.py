@@ -36,6 +36,9 @@ class Model():
     def sharpeRatio(self):
         return sharpeRato(self.outSample)
 
+    def statisticalSignificance(self, benchmark, nSubsets):
+        raise NotImplementedError
+
     def filterParams(self, params):
         filtered_mydict = {
             k: v for k, v in params.items() if k in [p.name for p in inspect.signature(self.run).parameters.values()]
@@ -92,6 +95,30 @@ class ModelNoGamma(Model):
 class ModelGamma(Model):
     def __init__(self, name):
         super().__init__(name)
+
+    def run(self, params):
+        currentSubset = params['currentSubset']
+        period = params['period']
+        gammas = params['gammas']
+
+        filtered_mydict = {
+            k: v for k, v in params.items() if k in [p.name for p in inspect.signature(self.alpha).parameters.values()]
+        }
+
+        for currentGamma in gammas:
+            
+            filtered_mydict['currentGamma'] = currentGamma
+
+            alpha = self.alpha(**filtered_mydict)
+            self.weights[:, currentSubset] = alpha[:, 0]
+            self.outSample[:, currentSubset] = self.outOfSampleReturns(
+                alpha, currentSubset, period)[:, 0]
+
+        if currentSubset == 0:
+            self.weightsBuyHold[:, currentSubset] = alpha[:, 0]
+        else:
+            self.weightsBuyHold[:, currentSubset] = self.buyHold(
+                self.weights[:, currentSubset - 1], currentSubset, period)
 
     def statisticalSignificance(self, benchmark, nSubsets):
         pass

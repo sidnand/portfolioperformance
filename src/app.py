@@ -3,7 +3,7 @@ import numpy as np
 
 
 class App:
-    def __init__(self, path, gamma, timeHorizon, models, delim=",", date=False) -> None:
+    def __init__(self, path, gammas, timeHorizon, models, delim=",", date=False) -> None:
         self.path = path
         self.delim = delim
         self.originalData = self.readFile()
@@ -12,7 +12,7 @@ class App:
         (self.period, self.n) = self.data.shape
 
         self.models = models
-        self.gamma = gamma
+        self.gammas = gammas
         self.timeHorizon = timeHorizon
 
         # risk-free asset column
@@ -91,7 +91,7 @@ class App:
 
                 params = stats | {
                     "n": self.n,
-                    "gamma": self.gamma,
+                    "gammas": self.gammas,
                     "nRisky": self.nRisky,
 
                     "period": period,

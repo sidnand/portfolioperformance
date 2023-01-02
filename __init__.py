@@ -15,7 +15,7 @@ PATH_OLD = "data/old/SPSectors.txt"
 # MODEL CONSTANTS
 
 # Risk averse levels
-GAMMA = [1, 2, 3, 4, 5, 10]
+GAMMAS = [1, 2, 3, 4, 5, 10]
 
 # Time horizons
 TIME_HORIZON = [60, 120]
@@ -28,12 +28,12 @@ models = [
     MinVar("Minimum Variance"),
     MinVarShortSellCon("Minimum Variance Short Sell Constrained"),
     KanZhouEw("Kan Zhou EW"),
-    # MeanVar("Mean Variance (Markowitz)")
+    MeanVar("Mean Variance (Markowitz)")
 ]
 
 def main() -> None:
     # app = App(PATH, GAMMA, TIME_HORIZON, models)
-    app = App(PATH_OLD, GAMMA, TIME_HORIZON, models, delim="\s+", date=True)
+    app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
 
     sr = app.getSharpeRatios()
     sig = app.getStatisticalSignificances(benchmark)
