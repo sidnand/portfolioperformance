@@ -41,11 +41,3 @@ def sharpeRato(x):
 
 def pval(z):
     return 1 - stats.norm.cdf(z)
-
-def getStats(benchmark, outSample, nSubsets, isGamma = False):
-    sr = sharpeRato(outSample)
-    z = jobsonKorkieZStat(benchmark, outSample, nSubsets)
-    p = pval(z)
-    stdError = se(outSample)
-    
-    return {'sharpeRatio': sr, 'pVal': p, 'se': stdError}
