@@ -1,26 +1,13 @@
 import numpy as np
 
-from ..model import Model
+from ..model import *
 
-class KanZhouEw(Model):
+
+class KanZhouEw(ModelNoGamma):
     def __init__(self, name):
         super().__init__(name)
 
-    def _run(self, nRisky, period, sigma, currentSubset, nSubsets):
-        alpha = self._alpha(nRisky, period, sigma)
-
-        self.weights[:, currentSubset] = alpha[:, 0]
-
-        if currentSubset == 0:
-            self.weightsBuyHold[:, currentSubset] = alpha[:, 0]
-        else:
-            self.weightsBuyHold[:, currentSubset] = self.buyHold(
-                self.weights[:, currentSubset - 1], currentSubset, period)
-
-        if (nSubsets > 1):
-            self.outSample[:, currentSubset] = self.outOfSampleReturns(alpha, currentSubset, period)[:, 0]
-
-    def _alpha(self, nRisky, period, sigma):
+    def alpha(self, nRisky, period, sigma):
         invSigma = np.linalg.inv(sigma)
 
         esige_matrix = (np.ones((1, nRisky)) @ sigma @ np.ones((nRisky, 1)))

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from src.main import App
+from src.app import App
 
 from src.models.ew import EqualWeight
 from src.models.JagannathanMa import JagannathanMa
@@ -17,10 +17,10 @@ PATH_OLD = "data/old/SPSectors.txt"
 # Risk averse levels
 GAMMA = [1, 2, 3, 4, 5, 10]
 
-# Time horizon
+# Time horizons
 TIME_HORIZON = [60, 120]
 
-benchmark = EqualWeight("Equal Weight"),
+benchmark = EqualWeight("Equal Weight")
 
 models = [
     benchmark,
@@ -28,7 +28,7 @@ models = [
     MinVar("Minimum Variance"),
     MinVarShortSellCon("Minimum Variance Short Sell Constrained"),
     KanZhouEw("Kan Zhou EW"),
-    MeanVar("Mean Variance (Markowitz)")
+    # MeanVar("Mean Variance (Markowitz)")
 ]
 
 def main() -> None:
@@ -41,8 +41,8 @@ def main() -> None:
     for key, value in sr.items():
         print("{}: {}".format(key, value))
 
-    # for key, value in sig.items():
-    #     print("{}: {}".format(key, value))
+    for key, value in sig.items():
+        print("{}: {}".format(key, value))
 
 if __name__ == "__main__":
     main()
