@@ -11,6 +11,7 @@ from src.models.noGamma.minVarShortSellCon import MinVarShortSellCon
 from src.models.gamma.meanVar import MeanVar
 from src.models.gamma.meanVarShortSellCon import MeanVarShortSellCon
 from src.models.gamma.bayesStein import BayesStein
+from src.models.gamma.bayesSteinShortSellCon import BayesSteinShortSellCon
 
 PATH = "data/new/processed/sp_sector.csv"
 PATH_OLD = "data/old/SPSectors.txt"
@@ -34,7 +35,8 @@ models = [
 
     MeanVar("Mean Variance (Markowitz)"),
     MeanVarShortSellCon("Mean Variance with Short Sell Constrains"),
-    BayesStein("Bayes Stein")
+    BayesStein("Bayes Stein"),
+    BayesSteinShortSellCon("Bayes Stein with Short Sell Constrains")
 ]
 
 def main() -> None:

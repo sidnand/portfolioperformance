@@ -93,7 +93,7 @@ class App:
             "Y0": Y0,
             "w": w,
             "lamda": lamda,
-            "muBS": np.expand_dims(muBS, axis=1),
+            "muBS": muBS,
             "sigmaBS": sigmaBS,
             "invSigmaBS": invSigmaBS,
             "totalSigmaBS": totalSigmaBS
