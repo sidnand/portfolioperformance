@@ -42,9 +42,17 @@ class App:
         return withDate if date else withoutDate
 
     def initModels(self):
+        params = {
+            "nRisky": self.nRisky,
+            "period": self.period,
+            "timeHorizon": self.timeHorizon,
+            "riskFreeReturns": self.riskFreeReturns,
+            "riskyReturns": self.riskyReturns,
+            "gammas": self.gammas
+        }
+
         for model in self.models:
-            model.init(self.nRisky, self.period, self.timeHorizon,
-                       self.riskFreeReturns, self.riskyReturns)
+            model.init(params)
 
     def getStats(self, riskFreeSubset, riskySubset, subset, period) -> dict:
         mu = np.append(np.array([np.mean(riskFreeSubset)]),
@@ -112,8 +120,13 @@ class App:
 
     def getStatisticalSignificances(self, benchmark):
         sig = {}
+        params = {
+            "benchmark": benchmark.outSample,
+            "nSubsets": self.nSubsets,
+            "gammas": self.gammas
+        }
 
         for model in self.models:
-            sig[model.name] = model.statisticalSignificance(benchmark.outSample, self.nSubsets, self.gammas)
+            sig[model.name] = model.statisticalSignificance(params)
 
         return sig

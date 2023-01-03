@@ -1,4 +1,3 @@
-import inspect
 import numpy as np
 
 from src.utils.statistics import *
@@ -16,29 +15,30 @@ class Model():
         self.riskFreeReturns = None
         self.riskyReturns = None
 
-    def init(self, nRisky, m, timeHorizon, riskFreeReturns, riskyReturns):
-        self.weights = np.empty((nRisky, m - timeHorizon[-1]))
-        self.weightsBuyHold = np.empty(
-            (nRisky, m - timeHorizon[-1]))
-        self.outSample = np.empty((1, m - timeHorizon[-1]))
+    def init(self, params):
+        filter = filterParams(params, self, "_init")
 
-        self.riskFreeReturns = riskFreeReturns
-        self.riskyReturns = riskyReturns
+        try:
+            self._init(**filter)
+        except:
+            raise NotImplementedError("Model does not implement _init method")
 
     def alpha(**kwargs):
-        raise NotImplementedError
+        raise NotImplementedError("Model does not implement alpha method")
 
-    def statisticalSignificance(self, benchmark, nSubsets):
-        raise NotImplementedError
-
-    def run(self, **kwargs):
-        raise NotImplementedError
+    def run(self, params):
+        raise NotImplementedError("Model does not implement run method")
 
     def sharpeRatio(self):
         return sharpeRato(self.outSample)
 
-    def statisticalSignificance(self, **kwargs):
-        raise NotImplementedError
+    def statisticalSignificance(self, params):
+        filter = filterParams(params, self, "_statisticalSignificance")
+
+        try:
+            return self._statisticalSignificance(**filter)
+        except:
+            raise NotImplementedError("Model does not implement _statisticalSignificance method")
 
     def buyHold(self, weights, currentSubset, period):
         a = (1 - sum(weights)) * (1 + self.riskFreeReturns[period + currentSubset])
@@ -55,6 +55,15 @@ class Model():
 class ModelNoGamma(Model):
     def __init__(self, name):
         super().__init__(name)
+
+    def _init(self, nRisky, period, timeHorizon, riskFreeReturns, riskyReturns):
+        self.weights = np.empty((nRisky, period - timeHorizon[-1]))
+        self.weightsBuyHold = np.empty(
+            (nRisky, period - timeHorizon[-1]))
+        self.outSample = np.empty((1, period - timeHorizon[-1]))
+
+        self.riskFreeReturns = riskFreeReturns
+        self.riskyReturns = riskyReturns
 
     def run(self, params):
         currentSubset = params['currentSubset']
@@ -77,7 +86,7 @@ class ModelNoGamma(Model):
             self.outSample[:, currentSubset] = self.outOfSampleReturns(
                 alpha, currentSubset, period)[:, 0]
 
-    def statisticalSignificance(self, benchmark, nSubsets):
+    def _statisticalSignificance(self, benchmark, nSubsets):
         z = jobsonKorkieZStat(benchmark, self.outSample, nSubsets)
         p = pval(z)
 
@@ -88,6 +97,15 @@ class ModelGamma(Model):
     def __init__(self, name):
         super().__init__(name)
 
+    def _init(self, nRisky, period, timeHorizon, riskFreeReturns, riskyReturns, gammas):
+        self.weights = np.empty((nRisky, period - timeHorizon[-1], len(gammas)))
+        self.weightsBuyHold = np.empty(
+            (nRisky, period - timeHorizon[-1], len(gammas)))
+        self.outSample = np.empty((len(gammas), period - timeHorizon[-1]))
+
+        self.riskFreeReturns = riskFreeReturns
+        self.riskyReturns = riskyReturns
+
     def run(self, params):
         currentSubset = params['currentSubset']
         period = params['period']
@@ -95,27 +113,25 @@ class ModelGamma(Model):
 
         filter = filterParams(params, self, "alpha")
 
-        for currentGamma in gammas:
-            
-            filter['currentGamma'] = currentGamma
+        for i in range(0, len(gammas)):
+
+            filter['currentGamma'] = gammas[i]
 
             alpha = self.alpha(**filter)
-            self.weights[:, currentSubset] = alpha[:, 0]
-            self.outSample[:, currentSubset] = self.outOfSampleReturns(
-                alpha, currentSubset, period)[:, 0]
+            self.weights[:, currentSubset, i] = alpha[:, 0]
+            self.outSample[i, currentSubset] = self.outOfSampleReturns(alpha, currentSubset, period)[:, 0]
 
-        if currentSubset == 0:
-            self.weightsBuyHold[:, currentSubset] = alpha[:, 0]
+        if currentSubset == 1:
+            self.weightsBuyHold[:, currentSubset,i] = alpha[:, 0]
         else:
-            self.weightsBuyHold[:, currentSubset] = self.buyHold(
-                self.weights[:, currentSubset - 1], currentSubset, period)
+            self.weightsBuyHold[:, currentSubset,i] = self.buyHold(
+                self.weights[:, currentSubset - 1, i], currentSubset, period)
 
-    def statisticalSignificance(self, benchmark, nSubsets, gammas):
-        n = len(gammas)
-        z = []
+    def _statisticalSignificance(self, benchmark, nSubsets, gammas):
+        z = list(range(len(gammas)))
 
-        for i in range(0, n):
-            z[i] = jobsonKorkieZStat(benchmark, self.outSample[i, :], nSubsets)
+        for i in range(0, len(gammas)):
+            z[i] = jobsonKorkieZStat(benchmark, self.outSample[i], nSubsets)
 
         p = pval(z)
 
