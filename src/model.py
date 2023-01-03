@@ -35,10 +35,12 @@ class Model():
     def statisticalSignificance(self, params):
         filter = filterParams(params, self, "_statisticalSignificance")
 
-        try:
-            return self._statisticalSignificance(**filter)
-        except:
-            raise NotImplementedError("Model does not implement _statisticalSignificance method")
+        return self._statisticalSignificance(**filter)
+
+        # try:
+        #     return self._statisticalSignificance(**filter)
+        # except:
+        #     raise NotImplementedError("Model does not implement _statisticalSignificance method")
 
     def buyHold(self, weights, currentSubset, period):
         a = (1 - sum(weights)) * (1 + self.riskFreeReturns[period + currentSubset])

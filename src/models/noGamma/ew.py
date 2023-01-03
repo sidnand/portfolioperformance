@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..model import *
-from ..utils.statistics import *
+from ...model import *
+from ...utils.statistics import *
 
 class EqualWeight(ModelNoGamma):
     def __init__(self, name):

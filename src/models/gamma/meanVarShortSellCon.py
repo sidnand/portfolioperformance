@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..model import *
-from ..utils.quadprog import *
+from ...model import *
+from ...utils.quadprog import *
 
 
 class MeanVarShortSellCon(ModelGamma):
@@ -9,21 +9,6 @@ class MeanVarShortSellCon(ModelGamma):
         super().__init__(name)
 
     def alpha(self, n, mu, sigma, currentGamma):
-        # A = ones(1, n-1)
-
-        # b = 1
-        # lb = zeros(1, n-1)
-        # ub = ones(1, n-1)
-
-        # mu = mu(2: end)
-
-        # H = gam*Sigma
-        # f = -mu'
-
-        # options = optimset('Display', 'off')
-        # x = quadprog(H, f, A, b, [], [], lb, ub, [], options)
-
-        # result = x
 
         mu = mu[1:]
 

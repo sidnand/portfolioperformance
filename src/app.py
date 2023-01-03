@@ -68,13 +68,35 @@ class App:
         amle = np.ones((1, self.nRisky)
                        ) @ invSigmaMLE @ np.ones((self.nRisky, 1))
 
+        Y = np.expand_dims(mu[1:], axis=1)
+        sigmaHat = (period - 1) / (period - self.nRisky - 2) * np.cov(riskySubset.T)
+        invSigmaHat = np.linalg.inv(sigmaHat)
+        Ahat = np.ones((1, self.nRisky)) @ invSigmaHat @ np.ones((self.nRisky, 1))
+        Y0 = (np.ones((1, self.nRisky)) @ invSigmaHat @ Y) / Ahat
+        w = (self.nRisky + 2) / ((self.nRisky + 2) + (Y - Y0).T @ (period * invSigmaHat) @ (Y - Y0))
+        lamda = (self.nRisky + 2) / ((Y - Y0).T @ invSigmaHat @ (Y - Y0))
+        muBS = np.append(np.array([np.mean(riskFreeSubset)]), (1 - w) * Y + w * Y0)
+        sigmaBS = sigmaHat * (1 + 1 / (period + lamda)) + lamda / (period * (period + 1 + lamda)) * np.ones((self.nRisky, 1)) @ np.ones((1, self.nRisky)) / Ahat
+        invSigmaBS = np.linalg.inv(sigmaBS)
+        totalSigmaBS = (period - 1) / (period - self.nRisky - 2) * totalSigma
+
         return {
             "mu": mu,
             "sigma": sigma,
             "totalSigma": totalSigma,
             "sigmaMLE": sigmaMLE,
             "invSigmaMLE": invSigmaMLE,
-            "amle": amle
+            "amle": amle,
+            "sigmaHat": sigmaHat,
+            "invSigmaHat": invSigmaHat,
+            "Ahat": Ahat,
+            "Y0": Y0,
+            "w": w,
+            "lamda": lamda,
+            "muBS": np.expand_dims(muBS, axis=1),
+            "sigmaBS": sigmaBS,
+            "invSigmaBS": invSigmaBS,
+            "totalSigmaBS": totalSigmaBS
         }
 
     def run(self):

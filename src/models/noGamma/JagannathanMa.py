@@ -1,8 +1,8 @@
 import numpy as np
 
-from ..model import *
-from ..utils.quadprog import quadprog
-from ..utils.sharedOptions import *
+from ...model import *
+from ...utils.quadprog import quadprog
+from ...utils.sharedOptions import minVarConOptions
 
 
 class JagannathanMa(ModelNoGamma):
