@@ -114,7 +114,6 @@ class App:
         sig = {}
 
         for model in self.models:
-            sig[model.name] = model.statisticalSignificance(
-                benchmark.outSample, self.nSubsets)
+            sig[model.name] = model.statisticalSignificance(benchmark.outSample, self.nSubsets, self.gammas)
 
         return sig

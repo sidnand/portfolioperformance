@@ -36,13 +36,13 @@ def main() -> None:
     app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
 
     sr = app.getSharpeRatios()
-    sig = app.getStatisticalSignificances(benchmark)
+    # sig = app.getStatisticalSignificances(benchmark)
 
     for key, value in sr.items():
         print("{}: {}".format(key, value))
 
-    for key, value in sig.items():
-        print("{}: {}".format(key, value))
+    # for key, value in sig.items():
+    #     print("{}: {}".format(key, value))
 
 if __name__ == "__main__":
     main()

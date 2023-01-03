@@ -2,6 +2,7 @@ import inspect
 import numpy as np
 
 from src.utils.statistics import *
+from src.utils.filter import *
 
 
 class Model():
@@ -36,15 +37,8 @@ class Model():
     def sharpeRatio(self):
         return sharpeRato(self.outSample)
 
-    def statisticalSignificance(self, benchmark, nSubsets):
+    def statisticalSignificance(self, **kwargs):
         raise NotImplementedError
-
-    def filterParams(self, params):
-        filtered_mydict = {
-            k: v for k, v in params.items() if k in [p.name for p in inspect.signature(self.run).parameters.values()]
-        }
-
-        return self.run(**filtered_mydict)
 
     def buyHold(self, weights, currentSubset, period):
         a = (1 - sum(weights)) * (1 + self.riskFreeReturns[period + currentSubset])
@@ -67,11 +61,9 @@ class ModelNoGamma(Model):
         period = params['period']
         nSubsets = params['nSubsets']
 
-        filtered_mydict = {
-            k: v for k, v in params.items() if k in [p.name for p in inspect.signature(self.alpha).parameters.values()]
-        }
+        filter = filterParams(params, self, "alpha")
 
-        alpha = self.alpha(**filtered_mydict)
+        alpha = self.alpha(**filter)
 
         self.weights[:, currentSubset] = alpha[:, 0]
 
@@ -101,15 +93,13 @@ class ModelGamma(Model):
         period = params['period']
         gammas = params['gammas']
 
-        filtered_mydict = {
-            k: v for k, v in params.items() if k in [p.name for p in inspect.signature(self.alpha).parameters.values()]
-        }
+        filter = filterParams(params, self, "alpha")
 
         for currentGamma in gammas:
             
-            filtered_mydict['currentGamma'] = currentGamma
+            filter['currentGamma'] = currentGamma
 
-            alpha = self.alpha(**filtered_mydict)
+            alpha = self.alpha(**filter)
             self.weights[:, currentSubset] = alpha[:, 0]
             self.outSample[:, currentSubset] = self.outOfSampleReturns(
                 alpha, currentSubset, period)[:, 0]
@@ -120,5 +110,13 @@ class ModelGamma(Model):
             self.weightsBuyHold[:, currentSubset] = self.buyHold(
                 self.weights[:, currentSubset - 1], currentSubset, period)
 
-    def statisticalSignificance(self, benchmark, nSubsets):
-        pass
+    def statisticalSignificance(self, benchmark, nSubsets, gammas):
+        n = len(gammas)
+        z = []
+
+        for i in range(0, n):
+            z[i] = jobsonKorkieZStat(benchmark, self.outSample[i, :], nSubsets)
+
+        p = pval(z)
+
+        return p
