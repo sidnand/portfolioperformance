@@ -108,7 +108,7 @@ class App:
                 }
 
                 for model in self.models:
-                    model.run(params)
+                    model.runOutSample(params)
 
     def getSharpeRatios(self):
         sr = {}

@@ -26,7 +26,7 @@ class Model():
     def alpha(**kwargs):
         raise NotImplementedError("Model does not implement alpha method")
 
-    def run(self, params):
+    def runOutSample(self, params):
         raise NotImplementedError("Model does not implement run method")
 
     def sharpeRatio(self):
@@ -65,7 +65,7 @@ class ModelNoGamma(Model):
         self.riskFreeReturns = riskFreeReturns
         self.riskyReturns = riskyReturns
 
-    def run(self, params):
+    def runOutSample(self, params):
         currentSubset = params['currentSubset']
         period = params['period']
         nSubsets = params['nSubsets']
@@ -106,7 +106,7 @@ class ModelGamma(Model):
         self.riskFreeReturns = riskFreeReturns
         self.riskyReturns = riskyReturns
 
-    def run(self, params):
+    def runOutSample(self, params):
         currentSubset = params['currentSubset']
         period = params['period']
         gammas = params['gammas']
