@@ -1,42 +1,48 @@
 #!/usr/bin/env python3
 
-import pandas as pd
+from src.app import App
 
-from src.system import *
+from src.models.ew import EqualWeight
+from src.models.JagannathanMa import JagannathanMa
+from src.models.kanZhouEw import KanZhouEw
+from src.models.meanVar import MeanVar
+from src.models.minVar import MinVar
+from src.models.minVarShortSellCon import MinVarShortSellCon
 
-PATH_OLD = "data/old/SPSectors.txt"
 PATH = "data/new/processed/sp_sector.csv"
+PATH_OLD = "data/old/SPSectors.txt"
 
 # MODEL CONSTANTS
 
 # Risk averse levels
-GAMMA = [1, 2, 3, 4, 5, 10]
+GAMMAS = [1, 2, 3, 4, 5, 10]
 
-# Time horizon
+# Time horizons
 TIME_HORIZON = [60, 120]
 
-SPSectorsPandas = pd.read_table(PATH, sep = ",")
-SPSectorsPandasOld = pd.read_table(PATH_OLD, sep = "\s+")
+benchmark = EqualWeight("Equal Weight")
 
-SPSectors = SPSectorsPandas.to_numpy()
-SPSectorsOld = SPSectorsPandasOld.to_numpy()[:, 1:]
-
-COLS = SPSectors.shape[1]
-COLS_OLD = SPSectorsOld.shape[1]
+models = [
+    benchmark,
+    JagannathanMa("Jagannathan Ma"),
+    MinVar("Minimum Variance"),
+    MinVarShortSellCon("Minimum Variance Short Sell Constrained"),
+    KanZhouEw("Kan Zhou EW"),
+    MeanVar("Mean Variance (Markowitz)")
+]
 
 def main() -> None:
-    SYSTEM = System(SPSectors, TIME_HORIZON)
-    # SYSTEM = System(SPSectorsOld, TIME_HORIZON)
+    # app = App(PATH, GAMMA, TIME_HORIZON, models)
+    app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
 
-    sr = SYSTEM.getSharpeRatios(GAMMA)
+    sr = app.getSharpeRatios()
+    sig = app.getStatisticalSignificances(benchmark)
 
     for key, value in sr.items():
-        print('Policy: ', key.value)
+        print("{}: {}".format(key, value))
 
-        for k, v in value.items():
-            print("{} : {}".format(k, round(v, 4)))
-        print()
-
+    for key, value in sig.items():
+        print("{}: {}".format(key, value))
 
 if __name__ == "__main__":
     main()
