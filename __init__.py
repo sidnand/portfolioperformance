@@ -2,14 +2,15 @@
 
 from src.app import App
 
-from src.models.ew import EqualWeight
-from src.models.JagannathanMa import JagannathanMa
-from src.models.kanZhouEw import KanZhouEw
-from src.models.minVar import MinVar
-from src.models.minVarShortSellCon import MinVarShortSellCon
+from src.models.noGamma.ew import EqualWeight
+from src.models.noGamma.JagannathanMa import JagannathanMa
+from src.models.noGamma.kanZhouEw import KanZhouEw
+from src.models.noGamma.minVar import MinVar
+from src.models.noGamma.minVarShortSellCon import MinVarShortSellCon
 
-from src.models.meanVar import MeanVar
-from src.models.meanVarShortSellCon import MeanVarShortSellCon
+from src.models.gamma.meanVar import MeanVar
+from src.models.gamma.meanVarShortSellCon import MeanVarShortSellCon
+from src.models.gamma.bayesStein import BayesStein
 
 PATH = "data/new/processed/sp_sector.csv"
 PATH_OLD = "data/old/SPSectors.txt"
@@ -33,6 +34,7 @@ models = [
 
     MeanVar("Mean Variance (Markowitz)"),
     MeanVarShortSellCon("Mean Variance with Short Sell Constrains"),
+    BayesStein("Bayes Stein")
 ]
 
 def main() -> None:
