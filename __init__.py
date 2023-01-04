@@ -57,6 +57,7 @@ def main() -> None:
     sr = app.getSharpeRatios()
     sig = app.getStatisticalSignificances(benchmark)
 
+
     # print("Sharpe Ratios")
 
     # for key, value in sr.items():

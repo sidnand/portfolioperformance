@@ -49,13 +49,39 @@ class Model():
         except:
             raise NotImplementedError("Model does not implement _statisticalSignificance method")
 
-    def toDataFrame(self):
-        weights = pd.DataFrame(self.weights.T)
-        print(weights)
-        print(self.assetNames)
-        weights.columns = self.assetNames
+    def toDataFrame(self, gammas = None):
+        if not gammas:
+            weights = pd.DataFrame(self.weights.T)
+            weights.columns = self.assetNames
 
-        return weights
+            weightsBuyHold = pd.DataFrame(self.weightsBuyHold.T)
+            weightsBuyHold.columns = self.assetNames
+
+            outSample = pd.DataFrame(self.outSample.T)
+            outSample.columns = ["Out of Sample"]
+
+            return weights, weightsBuyHold, outSample
+
+        else:
+            weights = [None] * len(gammas)
+            weightsBuyHold = [None] * len(gammas)
+            outSample = [None] * len(gammas)
+
+            for i in range(0, len(gammas)):
+                weights[i] = pd.DataFrame(self.weights[:, :, i].T)
+                weights[i].columns = self.assetNames
+
+                weightsBuyHold[i] = pd.DataFrame(self.weightsBuyHold[:, :, i].T)
+                weightsBuyHold[i].columns = self.assetNames
+
+                outSample[i] = pd.DataFrame(self.outSample[i, :].T)
+                outSample[i].columns = ["Out of Sample"]
+
+            weights = pd.concat(weights, keys=gammas, names=["Gamma"])
+            weightsBuyHold = pd.concat(weightsBuyHold, keys=gammas, names=["Gamma"])
+            outSample = pd.concat(outSample, keys=gammas, names=["Gamma"])
+
+            return weights, weightsBuyHold, outSample
 
     def buyHold(self, weights, currentSubset, period):
         a = (1 - sum(weights)) * (1 + self.riskFreeReturns[period + currentSubset])
