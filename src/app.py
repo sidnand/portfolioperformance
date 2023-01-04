@@ -8,7 +8,7 @@ class App:
         self.delim = delim
         self.originalData = self.readFile()
 
-        self.data = self.getData(date)
+        self.data, self.assetNames = self.getData(date)
         (self.period, self.n) = self.data.shape
 
         self.models = models
@@ -36,10 +36,17 @@ class App:
         return pd.read_table(self.path, sep=self.delim)
 
     def getData(self, date) -> np.ndarray:
-        withDate = self.originalData.to_numpy()[:, 1:]
-        withoutDate = self.originalData.to_numpy()
+        assetNames = None
+        data = None
 
-        return withDate if date else withoutDate
+        if date:
+            assetNames = list(self.originalData.columns[2:])
+            data = self.originalData.to_numpy()[:, 1:]
+        else:
+            assetNames = list(self.originalData.columns[1:])
+            data = self.originalData.to_numpy()
+
+        return data, assetNames
 
     def initModels(self):
         params = {
@@ -48,7 +55,8 @@ class App:
             "timeHorizon": self.timeHorizon,
             "riskFreeReturns": self.riskFreeReturns,
             "riskyReturns": self.riskyReturns,
-            "gammas": self.gammas
+            "gammas": self.gammas,
+            "assetNames": self.assetNames,
         }
 
         for model in self.models:
@@ -87,6 +95,8 @@ class App:
             "sigmaMLE": sigmaMLE,
             "invSigmaMLE": invSigmaMLE,
             "amle": amle,
+
+            "Y": Y,
             "sigmaHat": sigmaHat,
             "invSigmaHat": invSigmaHat,
             "Ahat": Ahat,

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from src.utils.statistics import *
 from src.utils.filter import *
@@ -7,6 +8,8 @@ from src.utils.filter import *
 class Model():
     def __init__(self, name):
         self.name = name
+
+        self.assetNames = None
 
         self.weights = None
         self.weightsBuyHold = None
@@ -18,6 +21,8 @@ class Model():
     def init(self, params):
         filter = filterParams(params, self, "_init")
 
+        self.assetNames = params['assetNames']
+
         try:
             self._init(**filter)
         except:
@@ -27,7 +32,11 @@ class Model():
         raise NotImplementedError("Model does not implement alpha method")
 
     def runOutSample(self, params):
-        raise NotImplementedError("Model does not implement run method")
+        raise NotImplementedError("Model does not implement runOutSample method")
+
+    def runInSample(self, params):
+        pass
+        # raise NotImplementedError("Model does not implement runInSample method")
 
     def sharpeRatio(self):
         return sharpeRato(self.outSample)
@@ -39,6 +48,14 @@ class Model():
             return self._statisticalSignificance(**filter)
         except:
             raise NotImplementedError("Model does not implement _statisticalSignificance method")
+
+    def toDataFrame(self):
+        weights = pd.DataFrame(self.weights.T)
+        print(weights)
+        print(self.assetNames)
+        weights.columns = self.assetNames
+
+        return weights
 
     def buyHold(self, weights, currentSubset, period):
         a = (1 - sum(weights)) * (1 + self.riskFreeReturns[period + currentSubset])

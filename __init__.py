@@ -26,19 +26,28 @@ GAMMAS = [1, 2, 3, 4, 5, 10]
 TIME_HORIZON = [60, 120]
 
 benchmark = EqualWeight("Equal Weight")
+minVar = MinVar("Minimum Variance")
+JagannathanMa = JagannathanMa("Jagannathan Ma")
+minVarShortSellCon = MinVarShortSellCon("Minimum Variance with Short Sell Constrains")
+kanZhouEw = KanZhouEw("Kan Zhou EW")
+
+meanVar = MeanVar("Mean Variance (Markowitz)")
+meanVarShortSellCon = MeanVarShortSellCon("Mean Variance with Short Sell Constrains")
+bayesStein = BayesStein("Bayes Stein")
+bayesSteinShortSellCon = BayesSteinShortSellCon("Bayes Stein with Short Sell Constrains")
+macKinlayPastor = MacKinlayPastor("MacKinlay and Pastor")
 
 models = [
     benchmark,
-    MinVar("Minimum Variance"),
-    JagannathanMa("Jagannathan Ma"),
-    MinVarShortSellCon("Minimum Variance with Short Sell Constrains"),
-    KanZhouEw("Kan Zhou EW"),
-
-    MeanVar("Mean Variance (Markowitz)"),
-    MeanVarShortSellCon("Mean Variance with Short Sell Constrains"),
-    BayesStein("Bayes Stein"),
-    BayesSteinShortSellCon("Bayes Stein with Short Sell Constrains"),
-    MacKinlayPastor("MacKinlay and Pastor")
+    minVar,
+    JagannathanMa,
+    minVarShortSellCon,
+    kanZhouEw,
+    meanVar,
+    meanVarShortSellCon,
+    bayesStein,
+    bayesSteinShortSellCon,
+    macKinlayPastor
 ]
 
 def main() -> None:
@@ -48,18 +57,18 @@ def main() -> None:
     sr = app.getSharpeRatios()
     sig = app.getStatisticalSignificances(benchmark)
 
-    print("Sharpe Ratios")
+    # print("Sharpe Ratios")
 
-    for key, value in sr.items():
-        print("{}: {}".format(key, value))
+    # for key, value in sr.items():
+    #     print("{}: {}".format(key, value))
 
-    print()
-    print()
+    # print()
+    # print()
 
-    print("Statistical Significances")
+    # print("Statistical Significances")
 
-    for key, value in sig.items():
-        print("{}: {}".format(key, value))
+    # for key, value in sig.items():
+    #     print("{}: {}".format(key, value))
 
 if __name__ == "__main__":
     main()
