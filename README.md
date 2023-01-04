@@ -8,9 +8,10 @@ This is a tool to test the out-of-sample performance using the Sharpe ratio of d
 * Minimum-variance
 * Minimum-varaince with shortsale constraints model
 * Minimum-varaince with generalized constraints (Jagannathan Ma) model
-* Kan Zhou equal weighted "three-fund" model
+* Kan Zhou equal weighted model
 * Mean-varaince (Markowitz) model
 * Mean-variance with shortsale constraints model
+* Kan Zhou (2007) "three-fund" model
 * Bayes-stein model
 * Bayes-stein with shortsale constraints model
 * MacKinlay and Pastor’s (2000) model 

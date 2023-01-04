@@ -10,6 +10,7 @@ from src.models.noGamma.minVarShortSellCon import MinVarShortSellCon
 
 from src.models.gamma.meanVar import MeanVar
 from src.models.gamma.meanVarShortSellCon import MeanVarShortSellCon
+from src.models.gamma.kanZhou import KanZhou
 from src.models.gamma.bayesStein import BayesStein
 from src.models.gamma.bayesSteinShortSellCon import BayesSteinShortSellCon
 from src.models.gamma.macKinlayPastor import MacKinlayPastor
@@ -33,6 +34,7 @@ kanZhouEw = KanZhouEw("Kan Zhou EW")
 
 meanVar = MeanVar("Mean Variance (Markowitz)")
 meanVarShortSellCon = MeanVarShortSellCon("Mean Variance with Short Sell Constrains")
+kanZhou = KanZhou("Kan Zhou Three Fund")
 bayesStein = BayesStein("Bayes Stein")
 bayesSteinShortSellCon = BayesSteinShortSellCon("Bayes Stein with Short Sell Constrains")
 macKinlayPastor = MacKinlayPastor("MacKinlay and Pastor")
@@ -45,6 +47,7 @@ models = [
     kanZhouEw,
     meanVar,
     meanVarShortSellCon,
+    kanZhou,
     bayesStein,
     bayesSteinShortSellCon,
     macKinlayPastor
