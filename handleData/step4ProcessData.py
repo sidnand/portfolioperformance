@@ -1,21 +1,17 @@
 import os
 import numpy as np
 
+from util import readData
+
 scriptDir = os.path.dirname(__file__)
 relReadPath = "../data/new/pre_processed"
 relWritePath = "../data/new/processed"
 
-def readData(filename):
-    # read csv file
-    header = np.genfromtxt(filename, delimiter=',', dtype=str, max_rows=1)
-    data = np.genfromtxt(filename, delimiter=',', skip_header=1)
-    return [data, header]
-
-def process(sector):
+def processData(sector):
     indir = os.path.join(scriptDir, relReadPath)
     outdir = os.path.join(scriptDir, relWritePath)
 
-    read = readData(indir + "/" + sector + ".csv")
+    read = readData(indir + "/" + sector + ".csv", sepHeader=True)
     data = read[0]
     header = read[1]
 
@@ -35,6 +31,3 @@ def process(sector):
     header = ",".join(header[1:])
 
     np.savetxt(outdir + "/" + sector + ".csv", data, delimiter=',', fmt='%s', header=header, comments='')
-
-def process_data():
-    process("sp_sector")

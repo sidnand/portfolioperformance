@@ -1,16 +1,14 @@
 import os
 import numpy as np
 
-scriptDir = os.path.dirname(__file__)
+from util import readData
+
 relReadPath = "../data/new/clean"
 relWritePath = "../data/new/pre_processed"
 
-def readData(filename):
-    # read csv file
-    data = np.genfromtxt(filename, delimiter=',', skip_header=1)
-    return data
+def combineData(sector, readPath=relReadPath, writePath=relWritePath):
+    scriptDir = os.path.dirname(__file__)
 
-def combineData(sector):
     indir = os.path.join(scriptDir, relReadPath)
     outdir = os.path.join(scriptDir, relWritePath)
 
@@ -46,6 +44,3 @@ def combineData(sector):
         os.mkdir(outdir)
     
     np.savetxt(outdir + "/" + sector + ".csv", data, delimiter=',', fmt='%s', header=header, comments='')
-
-def combine_data():
-    combineData("sp_sector")
