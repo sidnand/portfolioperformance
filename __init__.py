@@ -55,7 +55,10 @@ def main() -> None:
     # app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
 
     sr = app.getSharpeRatios()
-    sig = app.getStatisticalSignificances(benchmark)
+    sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
+
+    print(benchmark.statisticalSignificanceSR0(sr[benchmark.name]))
+    print(meanVar.statisticalSignificanceSR0(sr[meanVar.name], GAMMAS))
 
 
     # print("Sharpe Ratios")

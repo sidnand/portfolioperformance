@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as stats
 from math import sqrt
 
-def se(x):
+def stdError(x):
     return np.std(x.T, ddof = 1) / np.sqrt(x.shape[0])
 
 def jobsonKorkieZStat(benchmark, outSample, nSubsets):
@@ -26,11 +26,16 @@ def jobsonKorkieZStat(benchmark, outSample, nSubsets):
 
     if (theta <= 0): return (sigma2 * mu1 - sigma1 * mu2) / np.finfo(float).eps
     else: return (sigma2 * mu1 - sigma1 * mu2) / sqrt(theta)
+
+def zSharpeRatio0(outSample, sr):
+    se = stdError(outSample)
+
+    return abs(sr/se)
     
 
-def sharpeRato(x):
-    meanRet = np.mean(x)
-    stdRet = np.std(x)
+def sharpeRato(outSample):
+    meanRet = np.mean(outSample)
+    stdRet = np.std(outSample)
     
     if (abs(meanRet) > pow(10, -16)):
         sr = meanRet / stdRet;
@@ -39,5 +44,5 @@ def sharpeRato(x):
             
     return sr
 
-def pval(z):
+def pValue(z):
     return 1 - stats.norm.cdf(z)

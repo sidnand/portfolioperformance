@@ -41,13 +41,29 @@ class Model():
     def sharpeRatio(self):
         return sharpeRato(self.outSample)
 
-    def statisticalSignificance(self, params):
-        filter = filterParams(params, self, "_statisticalSignificance")
+    def statisticalSignificanceWRTBenchmark(self, params):
+        filter = filterParams(params, self, "_statisticalSignificanceWRTBenchmark")
         
         try:
-            return self._statisticalSignificance(**filter)
+            return self._statisticalSignificanceWRTBenchmark(**filter)
         except:
-            raise NotImplementedError("Model does not implement _statisticalSignificance method")
+            raise NotImplementedError("Model does not implement _statisticalSignificanceWRTBenchmark method")
+
+    def statisticalSignificanceSR0(self, sr, gammas = None):
+        if not gammas:
+            z = zSharpeRatio0(self.outSample, sr)
+            p = pValue(z)
+
+            return p
+        else:
+            z = list(range(len(gammas)))
+
+            for i in range(0, len(gammas)):
+                z[i] = zSharpeRatio0(self.outSample[i], sr)
+            
+            p = pValue(z)
+
+            return p
 
     def toDataFrame(self, gammas = None):
         if not gammas:
@@ -129,9 +145,9 @@ class ModelNoGamma(Model):
             self.outSample[:, currentSubset] = self.outOfSampleReturns(
                 alpha, currentSubset, period)[:, 0]
 
-    def _statisticalSignificance(self, benchmark, nSubsets):
+    def _statisticalSignificanceWRTBenchmark(self, benchmark, nSubsets):
         z = jobsonKorkieZStat(benchmark, self.outSample, nSubsets)
-        p = pval(z)
+        p = pValue(z)
 
         return p
 
@@ -170,12 +186,12 @@ class ModelGamma(Model):
             self.weightsBuyHold[:, currentSubset,i] = self.buyHold(
                 self.weights[:, currentSubset - 1, i], currentSubset, period)
 
-    def _statisticalSignificance(self, benchmark, nSubsets, gammas):
+    def _statisticalSignificanceWRTBenchmark(self, benchmark, nSubsets, gammas):
         z = list(range(len(gammas)))
 
         for i in range(0, len(gammas)):
             z[i] = jobsonKorkieZStat(benchmark, self.outSample[i], nSubsets)
 
-        p = pval(z)
+        p = pValue(z)
 
         return p

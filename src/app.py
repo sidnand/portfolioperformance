@@ -150,7 +150,7 @@ class App:
 
         return sr
 
-    def getStatisticalSignificances(self, benchmark):
+    def getStatisticalSignificanceWRTBenchmark(self, benchmark):
         sig = {}
         params = {
             "benchmark": benchmark.outSample,
@@ -159,6 +159,6 @@ class App:
         }
 
         for model in self.models:
-            sig[model.name] = model.statisticalSignificance(params)
+            sig[model.name] = model.statisticalSignificanceWRTBenchmark(params)
 
         return sig
