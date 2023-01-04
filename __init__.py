@@ -57,22 +57,18 @@ def main() -> None:
     sr = app.getSharpeRatios()
     sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
 
-    print(benchmark.statisticalSignificanceSR0(sr[benchmark.name]))
-    print(meanVar.statisticalSignificanceSR0(sr[meanVar.name], GAMMAS))
+    print("Sharpe Ratios")
 
+    for key, value in sr.items():
+        print("{}: {}".format(key, value))
 
-    # print("Sharpe Ratios")
+    print()
+    print()
 
-    # for key, value in sr.items():
-    #     print("{}: {}".format(key, value))
+    print("Statistical Significances")
 
-    # print()
-    # print()
-
-    # print("Statistical Significances")
-
-    # for key, value in sig.items():
-    #     print("{}: {}".format(key, value))
+    for key, value in sig.items():
+        print("{}: {}".format(key, value))
 
 if __name__ == "__main__":
     main()

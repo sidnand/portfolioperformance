@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...model import *
+from ...modelGamma import ModelGamma
 
 class BayesStein(ModelGamma):
     def __init__(self, name):

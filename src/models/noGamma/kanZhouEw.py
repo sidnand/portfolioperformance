@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...model import *
+from ...modelNoGamma import ModelNoGamma
 
 
 class KanZhouEw(ModelNoGamma):

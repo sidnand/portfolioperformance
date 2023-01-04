@@ -1,6 +1,6 @@
 import numpy as np
 
-from ...model import *
+from ...modelGamma import ModelGamma
 from ...utils.quadprog import *
 from ...utils.sharedOptions import gammaShortSellConOptions
 

@@ -1,4 +1,4 @@
-from ...model import *
+from ...modelGamma import ModelGamma
 
 
 class MeanVar(ModelGamma):
