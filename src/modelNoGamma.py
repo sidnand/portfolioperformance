@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from .model import Model
 from src.utils.filter import filterParams
@@ -44,3 +45,22 @@ class ModelNoGamma(Model):
         p = pValue(z)
 
         return p
+
+    def toDataFrame(self, **kwargs):
+        weights = pd.DataFrame(self.weights.T)
+        weights.columns = self.assetNames
+
+        weightsBuyHold = pd.DataFrame(self.weightsBuyHold.T)
+        weightsBuyHold.columns = self.assetNames
+
+        outSample = pd.DataFrame(self.outSample.T)
+        outSample.columns = ["Out of Sample"]
+
+        return weights, weightsBuyHold, outSample
+
+    def statisticalSignificanceSR0(self, sr, **kwargs):
+        z = zSharpeRatio0(self.outSample, sr)
+        p = pValue(z)
+
+        return p
+

@@ -22,7 +22,7 @@ class App:
 
         # number of risky variables
         self.nRisky = self.n - 1
-        # time currentPeriod
+        # total time period
         self.t = len(self.riskyReturns)
         # last time horizon
         self.upperM = self.timeHorizon[-1]
@@ -48,7 +48,7 @@ class App:
 
         return data, assetNames
 
-    def initModels(self):
+    def initModels(self) -> None:
         params = {
             "nRisky": self.nRisky,
             "period": self.period,

@@ -54,8 +54,8 @@ models = [
 ]
 
 def main() -> None:
-    app = App(PATH, GAMMAS, TIME_HORIZON, models)
-    # app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
+    # app = App(PATH, GAMMAS, TIME_HORIZON, models)
+    app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
 
     sr = app.getSharpeRatios()
     sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)

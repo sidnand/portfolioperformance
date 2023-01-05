@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from .model import Model
 from src.utils.filter import filterParams
@@ -46,6 +47,43 @@ class ModelGamma(Model):
 
         for i in range(0, len(gammas)):
             z[i] = jobsonKorkieZStat(benchmark, self.outSample[i], nSubsets)
+
+        p = pValue(z)
+
+        return p
+
+    def toDataFrame(self, **kwargs):
+        gammas = kwargs['gammas']
+
+        weights = [None] * len(gammas)
+        weightsBuyHold = [None] * len(gammas)
+        outSample = [None] * len(gammas)
+
+        for i in range(0, len(gammas)):
+            weights[i] = pd.DataFrame(self.weights[:, :, i].T)
+            weights[i].columns = self.assetNames
+
+            weightsBuyHold[i] = pd.DataFrame(
+                self.weightsBuyHold[:, :, i].T)
+            weightsBuyHold[i].columns = self.assetNames
+
+            outSample[i] = pd.DataFrame(self.outSample[i, :].T)
+            outSample[i].columns = ["Out of Sample"]
+
+        weights = pd.concat(weights, keys=gammas, names=["Gamma"])
+        weightsBuyHold = pd.concat(
+            weightsBuyHold, keys=gammas, names=["Gamma"])
+        outSample = pd.concat(outSample, keys=gammas, names=["Gamma"])
+
+        return weights, weightsBuyHold, outSample
+
+    def statisticalSignificanceSR0(self, sr, **kwargs):
+        gammas = kwargs['gammas']
+
+        z = list(range(len(gammas)))
+
+        for i in range(0, len(gammas)):
+            z[i] = zSharpeRatio0(self.outSample[i], sr)
 
         p = pValue(z)
 

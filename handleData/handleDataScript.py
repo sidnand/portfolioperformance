@@ -17,7 +17,9 @@ sp_sectors = {
     "SP_TELE_COMM": "%5ESP500-50"
 }
 
-industries = {}
+industries = {
+    
+}
 
 download(sp_sectors, "1mo", "1999-01-01", "2021-01-01", "sp_sector")
 cleanData("sp_sector")
