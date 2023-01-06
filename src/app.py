@@ -1,27 +1,56 @@
+from typing import *
+
 import pandas as pd
 import numpy as np
 
+from .model import Model
+
+'''
+    @brief Entry point for the application
+'''
 
 class App:
-    def __init__(self, path, gammas, timeHorizon, models, delim=",", date=False) -> None:
+    '''
+        Initialize the app with the following parameters:
+
+        @param path: path to the data file
+        @param gammas: risk averse levels
+        @param omegas: 
+        @param timeHorizon: time horizons for rolling window
+        @param models: list of models to run
+        @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
+        @param date: whether the data file has a date column, as the first column, default is False
+        @param logScale: whether the data file is in log scale, default is False
+        @param riskFactorPos: list of positions of the risk factors in the data file, default is None, start at index 0
+        @param windowType: type of window, default is "Rolling", other option is "Increasing"
+
+        @return: App object
+    '''
+
+    def __init__(self, path: str, gammas: list[int], omegas: list[int], timeHorizon: list[int], models: list[Model],
+                delim: Literal[",", "\s+"] = ",", date: bool = False, logScale: bool = False,
+                 riskFactorPositions: list[int] = [], windowType: Literal["Rolling", "Increasing"] = "Rolling") -> None:
         self.path = path
         self.delim = delim
-        self.originalData = self.readFile()
+        self.originalData = self.readFile(path, delim, date)
 
-        self.data, self.assetNames = self.getData(date)
-        (self.period, self.n) = self.data.shape
+        self.data, self.assetNames = self.getData()
+        self.period = self.data.shape[0]
 
         self.models = models
         self.gammas = gammas
+        self.omegas = omegas
         self.timeHorizon = timeHorizon
 
         # risk-free asset column
-        self.riskFreeReturns = self.data[:, 0]
+        self.riskFreeReturns = self.getRiskFreeReturns(logScale)
         # risky asset column, includes risk factor
-        self.riskyReturns = self.data[:, 1:self.n]
+        self.riskyReturns, self.withoutRiskFactorReturns = self.getRiskyReturns(logScale, riskFactorPositions)
+
+        self.n = self.riskyReturns.shape[1] + 1
 
         # number of risky variables
-        self.nRisky = self.n - 1
+        self.nRisky = self.n - len(riskFactorPositions)
         # total time period
         self.t = len(self.riskyReturns)
         # last time horizon
@@ -32,22 +61,70 @@ class App:
         self.initModels()
         self.run()
 
-    def readFile(self) -> pd.DataFrame:
-        return pd.read_table(self.path, sep=self.delim)
+    '''
+        @brief Read the data file into a pandas DataFrame
 
-    def getData(self, date) -> np.ndarray:
-        assetNames = None
-        data = None
+        @param path: path to the data file
+        @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
+        @param date: whether the data file has a date column, as the first column, default is False
 
+        @return: pandas DataFrame of the data file
+    '''
+    def readFile(self, path: str, delim: str, date: bool) -> pd.DataFrame:
         if date:
-            assetNames = list(self.originalData.columns[2:])
-            data = self.originalData.to_numpy()[:, 1:]
-        else:
-            assetNames = list(self.originalData.columns[1:])
-            data = self.originalData.to_numpy()
+            return pd.read_csv(path, delimiter=delim).iloc[:, 1:]
+
+        return pd.read_csv(path, delimiter=delim)
+
+    '''
+        @brief Get the data from the pandas DataFrame
+
+        @return: numpy array of the data
+        @return: list of asset names
+    '''
+    def getData(self) -> np.ndarray and list[str]:
+        # asset names exclude the risk-free asset
+        assetNames = list(self.originalData.columns)
+        data = self.originalData.to_numpy()
 
         return data, assetNames
 
+    '''
+        @brief Get the risk-free returns
+
+        @param logScale: whether the data file is in log scale, default is False
+
+        @return: numpy array of the risk-free returns
+    '''
+    def getRiskFreeReturns(self, logScale:bool) -> np.ndarray:
+        if logScale:
+            return np.exp(self.data[:, 0]) - 1
+
+        return self.data[:, 0]
+
+    '''
+        @brief Get the risky returns
+
+        @param logScale: whether the data file is in log scale, default is False
+        @param riskFactorPositions: list of positions of the risk factors in the data file, default is None, start at index 0
+
+        @return: numpy array of the risky returns
+        @return: numpy array of the risky returns without the risk factors
+    '''
+    def getRiskyReturns(self, logScale: list, riskFactor: list) -> np.ndarray and np.ndarray:
+        withoutRiskFactorReturns = None
+
+        riskyReturns = np.exp(self.data[:, 1:]) - 1 if logScale else self.data[:, 1:]
+        if riskFactor:
+            withoutRiskFactorReturns = np.exp(np.delete(self.data, riskFactor, 1)) - 1 if logScale else np.delete(self.data, riskFactor, 1)
+
+        return riskyReturns, withoutRiskFactorReturns
+
+    '''
+        @brief Initalize the models with the following parameters
+
+        @return: None
+    '''
     def initModels(self) -> None:
         params = {
             "nRisky": self.nRisky,
@@ -62,7 +139,17 @@ class App:
         for model in self.models:
             model.init(params)
 
-    def getStats(self, riskFreeSubset, riskySubset, subset, period) -> dict:
+    '''
+        @brief Get the statistics of the data needed for the models
+
+        @param riskFreeSubset: numpy array of the risk-free returns
+        @param riskySubset: numpy array of the risky returns
+        @param subset: numpy array of the returns for the given time period
+        @param period: time period
+
+        @return: dictionary of the statistics
+    '''
+    def getStats(self, riskFreeSubset, riskySubset, subset, period) -> dict[str, np.ndarray or float]:
         mu = np.append(np.array([np.mean(riskFreeSubset)]),
                        np.vstack(riskySubset.mean(axis=0)))
 
@@ -109,25 +196,33 @@ class App:
             "totalSigmaBS": totalSigmaBS
         }
 
-    def run(self):
+    '''
+        @brief Run the models
+
+        @return: None
+    '''
+    def run(self) -> None:
+        # loop through the time horizon, this is the rolling window
         for currentPeriod in self.timeHorizon:
-            period = currentPeriod  # time horizon
+            period = currentPeriod  # current time horizon
             shift = self.upperM - period  # shift in time horizon
-            period = currentPeriod + shift  # update time horizon
+            period = currentPeriod + shift  # update time horizon given shift
 
             # if period is the same as time currentPeriod, then we only have 1 subset
             self.nSubsets = 1 if period == self.t else self.t - period
 
             for currentSubset in range(0, self.nSubsets):
 
+                # get the subset of the data
                 riskySubset = self.riskyReturns[currentSubset +
                                                 shift:period+currentSubset-1, :]
                 riskFreeSubset = self.riskFreeReturns[currentSubset +
                                                       shift:period+currentSubset-1]
+
+                # combine the risk-free and risky returns
                 subset = np.column_stack((riskFreeSubset, riskySubset))
 
-                stats = self.getStats(
-                    riskFreeSubset, riskySubset, subset, period)
+                stats = self.getStats(riskFreeSubset, riskySubset, subset, period)
 
                 params = stats | {
                     "n": self.n,
@@ -142,7 +237,12 @@ class App:
                 for model in self.models:
                     model.runOutSample(params)
 
-    def getSharpeRatios(self):
+    '''
+        @brief Get the sharpe ratios of the models
+
+        @return: dictionary of the sharpe ratios
+    '''
+    def getSharpeRatios(self) -> dict[str, float]:
         sr = {}
 
         for model in self.models:
@@ -150,7 +250,14 @@ class App:
 
         return sr
 
-    def getStatisticalSignificanceWRTBenchmark(self, benchmark):
+    '''
+        @brief Get the statistical significance w.r.t a benchmark of the models
+
+        @param benchmark: out-of-sample returns for a benchmark model
+
+        @return: dictionary of the statistical significance
+    '''
+    def getStatisticalSignificanceWRTBenchmark(self, benchmark: np.array) -> dict[str, float]:
         sig = {}
         params = {
             "benchmark": benchmark.outSample,

@@ -23,6 +23,8 @@ PATH_OLD = "data/old/SPSectors.txt"
 # Risk averse levels
 GAMMAS = [1, 2, 3, 4, 5, 10]
 
+OMEGAS = []
+
 # Time horizons
 TIME_HORIZON = [60, 120]
 
@@ -54,8 +56,11 @@ models = [
 ]
 
 def main() -> None:
-    # app = App(PATH, GAMMAS, TIME_HORIZON, models)
-    app = App(PATH_OLD, GAMMAS, TIME_HORIZON, models, delim="\s+", date=True)
+    # app = App(PATH, GAMMAS, OMEGAS, TIME_HORIZON, models, 1)
+    # app = App(PATH_OLD, GAMMAS, OMEGAS, TIME_HORIZON, models, 1, delim="\s+", date=True)
+    # app = App(PATH, GAMMAS, OMEGAS, TIME_HORIZON, models, riskFactorPositions = [0])
+    app = App(PATH_OLD, GAMMAS, OMEGAS, TIME_HORIZON, models,
+              delim="\s+", date=True, riskFactorPositions=[0])
 
     sr = app.getSharpeRatios()
     sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
