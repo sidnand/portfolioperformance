@@ -10,7 +10,8 @@ class MeanVarShortSellCon(ModelGamma):
         super().__init__(name)
 
     def alpha(self, n, mu, sigma, currentGamma):
-        H, a, b, lb, ub, f = gammaShortSellConOptions(currentGamma, n, sigma, mu)
+        H, a, b, lb, ub, f = gammaShortSellConOptions(
+            currentGamma, n, sigma, mu[0:, 0])
 
         solver = quadprog(H, f, a, b, lb, ub)
         solverArr = np.asarray(solver)

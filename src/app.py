@@ -22,14 +22,24 @@ class App:
         @param date: whether the data file has a date column, as the first column, default is False
         @param logScale: whether the data file is in log scale, default is False
         @param riskFactorPos: list of positions of the risk factors in the data file, default is None, start at index 0
+        @param riskFreePos: position of the risk-free asset in the data file, default is 0, start at index 0
         @param windowType: type of window, default is "Rolling", other option is "Increasing"
 
         @return: App object
     '''
 
-    def __init__(self, path: str, gammas: list[int], omegas: list[int], timeHorizon: list[int], models: list[Model],
-                delim: Literal[",", "\s+"] = ",", date: bool = False, logScale: bool = False,
-                 riskFactorPositions: list[int] = [], windowType: Literal["Rolling", "Increasing"] = "Rolling") -> None:
+    def __init__(self, path: str,
+                gammas: list[int],
+                omegas: list[int],
+                timeHorizon: list[int],
+                models: list[Model],
+                delim: Literal[",", "\s+"] = ",",
+                date: bool = False,
+                logScale: bool = False,
+                riskFactorPositions: list[int] = [],
+                riskFreePosition: int = 0,
+                windowType: Literal["Rolling", "Increasing"] = "Rolling") -> None:
+
         self.path = path
         self.delim = delim
         self.originalData = self.readFile(path, delim, date)
@@ -41,11 +51,13 @@ class App:
         self.gammas = gammas
         self.omegas = omegas
         self.timeHorizon = timeHorizon
+        self.windowType = windowType
 
         # risk-free asset column
-        self.riskFreeReturns = self.getRiskFreeReturns(logScale)
+        self.riskFreeReturns = self.getRiskFreeReturns(logScale, riskFreePosition)
         # risky asset column, includes risk factor
-        self.riskyReturns, self.withoutRiskFactorReturns = self.getRiskyReturns(logScale, riskFactorPositions)
+        self.riskyReturns, self.withoutRiskFactorReturns = self.getRiskyReturns(
+            logScale, riskFactorPositions, riskFreePosition)
 
         self.n = self.riskyReturns.shape[1] + 1
 
@@ -96,11 +108,12 @@ class App:
 
         @return: numpy array of the risk-free returns
     '''
-    def getRiskFreeReturns(self, logScale:bool) -> np.ndarray:
-        if logScale:
-            return np.exp(self.data[:, 0]) - 1
 
-        return self.data[:, 0]
+    def getRiskFreeReturns(self, logScale: bool, riskFreePosition:int) -> np.ndarray:
+        if logScale:
+            return np.exp(self.data[:, riskFreePosition]) - 1
+
+        return self.data[:, riskFreePosition]
 
     '''
         @brief Get the risky returns
@@ -111,12 +124,14 @@ class App:
         @return: numpy array of the risky returns
         @return: numpy array of the risky returns without the risk factors
     '''
-    def getRiskyReturns(self, logScale: list, riskFactor: list) -> np.ndarray and np.ndarray:
+
+    def getRiskyReturns(self, logScale: list, riskFactor: list, riskFreePosition: int) -> np.ndarray and np.ndarray:
+        data = np.delete(self.data, riskFreePosition, 1)
         withoutRiskFactorReturns = None
 
-        riskyReturns = np.exp(self.data[:, 1:]) - 1 if logScale else self.data[:, 1:]
+        riskyReturns = np.exp(data[:, 1:]) - 1 if logScale else data[:, 1:]
         if riskFactor:
-            withoutRiskFactorReturns = np.exp(np.delete(self.data, riskFactor, 1)) - 1 if logScale else np.delete(self.data, riskFactor, 1)
+            withoutRiskFactorReturns = np.exp(np.delete(data, riskFactor, 1)) - 1 if logScale else np.delete(data, riskFactor, 1)
 
         return riskyReturns, withoutRiskFactorReturns
 
@@ -133,7 +148,10 @@ class App:
             "riskFreeReturns": self.riskFreeReturns,
             "riskyReturns": self.riskyReturns,
             "gammas": self.gammas,
+            "omegas": self.omegas,
             "assetNames": self.assetNames,
+            "withoutRiskFactorReturns": self.withoutRiskFactorReturns,
+            "windowType": self.windowType,
         }
 
         for model in self.models:
@@ -149,31 +167,35 @@ class App:
 
         @return: dictionary of the statistics
     '''
-    def getStats(self, riskFreeSubset, riskySubset, subset, period) -> dict[str, np.ndarray or float]:
+    def getStats(self, riskFreeSubset, riskySubset, subset, nPoints) -> dict[str, np.ndarray or float]:
+        meanRF = np.mean(riskFreeSubset)
+        meanR = np.mean(riskySubset, axis = 0)
+
         mu = np.append(np.array([np.mean(riskFreeSubset)]),
-                       np.vstack(riskySubset.mean(axis=0)))
+                       np.vstack(riskySubset.mean(axis = 0)))
+        mu = np.expand_dims(mu, axis = 1)
 
         totalSigma = np.cov(subset.T)
-        sigma = (period - 1) / (period - self.nRisky - 2) * \
-            np.cov(riskySubset.T)
+        sigma = (nPoints - 1) / (nPoints - self.nRisky - 2) * np.cov(riskySubset.T)
 
-        sigmaMLE = (period - 1) / period * np.cov(riskySubset.T)
+        sigmaMLE = (nPoints - 1) / (nPoints) * np.cov(riskySubset.T)
         invSigmaMLE = np.linalg.inv(sigmaMLE)
 
-        amle = np.ones((1, self.nRisky)
-                       ) @ invSigmaMLE @ np.ones((self.nRisky, 1))
+        amle = np.ones((1, self.nRisky)) @ invSigmaMLE @ np.ones((self.nRisky, 1))
 
-        Y = np.expand_dims(mu[1:], axis=1)
-        sigmaHat = (period - 1) / (period - self.nRisky - 2) * np.cov(riskySubset.T)
+        Y = mu[1:]
+        sigmaHat = (nPoints - 1) / (nPoints - self.nRisky - 2) * np.cov(riskySubset.T)
         invSigmaHat = np.linalg.inv(sigmaHat)
         Ahat = np.ones((1, self.nRisky)) @ invSigmaHat @ np.ones((self.nRisky, 1))
         Y0 = (np.ones((1, self.nRisky)) @ invSigmaHat @ Y) / Ahat
-        w = (self.nRisky + 2) / ((self.nRisky + 2) + (Y - Y0).T @ (period * invSigmaHat) @ (Y - Y0))
+        w = (self.nRisky + 2) / ((self.nRisky + 2) + (Y - Y0).T @ (nPoints * invSigmaHat) @ (Y - Y0))
         lamda = (self.nRisky + 2) / ((Y - Y0).T @ invSigmaHat @ (Y - Y0))
         muBS = np.append(np.array([np.mean(riskFreeSubset)]), (1 - w) * Y + w * Y0)
-        sigmaBS = sigmaHat * (1 + 1 / (period + lamda)) + lamda / (period * (period + 1 + lamda)) * np.ones((self.nRisky, 1)) @ np.ones((1, self.nRisky)) / Ahat
+        muBS = np.expand_dims(muBS, axis=1)
+        
+        sigmaBS = sigmaHat * (1 + 1 / (nPoints + lamda)) + lamda / (nPoints * (nPoints + 1 + lamda)) * np.ones((self.nRisky, 1)) @ np.ones((1, self.nRisky)) / Ahat
         invSigmaBS = np.linalg.inv(sigmaBS)
-        totalSigmaBS = (period - 1) / (period - self.nRisky - 2) * totalSigma
+        totalSigmaBS = (nPoints - 1) / (nPoints - self.nRisky - 2) * totalSigma
 
         return {
             "mu": mu,
@@ -205,8 +227,9 @@ class App:
         # loop through the time horizon, this is the rolling window
         for currentPeriod in self.timeHorizon:
             period = currentPeriod  # current time horizon
+            nPoints = period
             shift = self.upperM - period  # shift in time horizon
-            period = currentPeriod + shift  # update time horizon given shift
+            period = period + shift  # update time horizon given shift
 
             # if period is the same as time currentPeriod, then we only have 1 subset
             self.nSubsets = 1 if period == self.t else self.t - period
@@ -222,7 +245,7 @@ class App:
                 # combine the risk-free and risky returns
                 subset = np.column_stack((riskFreeSubset, riskySubset))
 
-                stats = self.getStats(riskFreeSubset, riskySubset, subset, period)
+                stats = self.getStats(riskFreeSubset, riskySubset, subset, nPoints)
 
                 params = stats | {
                     "n": self.n,
@@ -230,6 +253,7 @@ class App:
                     "nRisky": self.nRisky,
 
                     "period": period,
+                    "nPoints": nPoints,
                     "currentSubset": currentSubset,
                     "nSubsets": self.nSubsets,
                 }

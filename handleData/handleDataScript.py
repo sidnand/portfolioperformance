@@ -12,13 +12,9 @@ sp_sectors = {
     "SP_CONSUM_STAPLE": "%5ESP500-30",
     "SP_HEALTH": "%5ESP500-35",
     "SP_UTIL": "%5ESP500-55",
-    "SP_500": "%5EGSPC",
+    # "SP_500": "%5EGSPC",
     "SP_INFO_TECH": "%5ESP500-45",
     "SP_TELE_COMM": "%5ESP500-50"
-}
-
-industries = {
-    
 }
 
 download(sp_sectors, "1mo", "1999-01-01", "2021-01-01", "sp_sector")

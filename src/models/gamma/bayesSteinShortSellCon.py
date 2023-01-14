@@ -11,7 +11,7 @@ class BayesSteinShortSellCon(ModelGamma):
 
     def alpha(self, currentGamma, n, muBS, sigmaBS):
         H, a, b, lb, ub, f = gammaShortSellConOptions(
-            currentGamma, n, sigmaBS, muBS)
+            currentGamma, n, sigmaBS, muBS[0:, 0])
 
         solver = quadprog(H, f, a, b, lb, ub)
         solverArr = np.asarray(solver)

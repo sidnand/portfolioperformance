@@ -9,7 +9,8 @@ class KanZhou(ModelGamma):
         super().__init__(name)
 
     def alpha(self, currentGamma, invSigmaMLE, mu, period, nRisky):
-        mu = np.expand_dims(mu[1:], axis=1)
+        # mu = np.expand_dims(mu[1:], axis=1)
+        mu = mu[1:]
 
         mug = (mu.T @ invSigmaMLE @ np.ones((nRisky, 1))) / np.ones((1, nRisky)) @ invSigmaMLE @ np.ones((nRisky, 1))
         phiHat2 = (mu - mug).T @ invSigmaMLE @ (mu - mug)

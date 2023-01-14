@@ -34,15 +34,18 @@ def zSharpeRatio0(outSample, sr):
     
 
 def sharpeRato(outSample):
-    meanRet = np.mean(outSample)
-    stdRet = np.std(outSample)
-    
-    if (abs(meanRet) > pow(10, -16)):
-        sr = meanRet / stdRet;
-    else:
-        sr = None
+    meanRet = np.mean(outSample.T, axis = 0)
+    stdRet = np.std(outSample.T, axis = 0)
+
+    def sr(x, y):
+        if (abs(x) > pow(10, -16)):
+            return x / y
+        else:
+            return None
+
+    f = np.vectorize(sr)
             
-    return sr
+    return f(meanRet, stdRet)
 
 def pValue(z):
     return 1 - stats.norm.cdf(z)
