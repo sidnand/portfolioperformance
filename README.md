@@ -15,7 +15,7 @@ This is a tool to test the out-of-sample performance using the Sharpe ratio of d
 * Bayes-stein model
 * Bayes-stein with shortsale constraints model
 * MacKinlay and Pastor’s (2000) model 
-* Paster (Bayesian Data-and-Model)
+<!-- * Paster (Bayesian Data-and-Model) -->
 
 
 ## Data
