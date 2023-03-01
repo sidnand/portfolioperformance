@@ -90,7 +90,8 @@ sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
 
 Please create a pull-request to include your changes onto this repo. These changes will be reflected on the playground website linked above.
 
-1. Update version number in ``setup.py``. Please use the Semantic Versioning 2.0.0 system. [Click to learn more](https://semver.org/)
-2. Run ``pip install -e .`` to install the package locally.
-3. Run ``python setup.py sdist bdist_wheel`` to create a python wheel
-4. Create a pull-request!
+1. Run ``pip install -e .`` to install the package locally.
+2. Make changes.
+3. Update version number in ``setup.py``. Please use the Semantic Versioning 2.0.0 system. [Click to learn more](https://semver.org/).
+4. Run ``python setup.py sdist bdist_wheel`` to create a python wheel.
+5. Create a pull-request!
