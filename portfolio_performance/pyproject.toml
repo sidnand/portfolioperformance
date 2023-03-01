@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools"]
+
+[project]
+name = "portfolio-performance"
+version = "1.0.3"
+authors = [
+  { name="Siddharth Nand", email="snand233@gmail.com" },
+]
+description = "Tool to test the out-of-sample performance of portfolio optimization models"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/sidnand/portfolio-performance"
+"Bug Tracker" = "https://github.com/sidnand/portfolio-performance/issues"
