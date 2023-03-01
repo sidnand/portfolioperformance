@@ -5,3 +5,5 @@ vscode.code-workspace
 misc/
 matlab_playground/
 todo.md
+config.txt
+__init__.py
