@@ -40,8 +40,6 @@ from portfoliotest import *
 # Risk aversion levels
 GAMMAS = [1, 2, 3, 4, 5, 10]
 
-OMEGAS = [] # not available at the moment
-
 # Time horizons
 TIME_HORIZON = [60, 120]
 
@@ -53,7 +51,7 @@ models = [
     # <add other list of models>
 ]
 
-app = App(<data path>, GAMMAS, OMEGAS, TIME_HORIZON,
+app = App(<data path>, GAMMAS, TIME_HORIZON,
               models, date=<true or false>, riskFactorPositions=[0-indexed positions for risk factor column], riskFreePosition=<0-indexed, risk free asset column>)
 
 sr = app.getSharpeRatios()
@@ -70,8 +68,8 @@ sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
 
 ```bash
 .
+|-- __init__.py # import /src/app.py and all models
 |-- /src
-    |-- __init__.py # import /src/app.py and all models
     |-- app.py # code for running all the optimiation models
     |-- model.py # parent class to all the models
     |-- modelNoGamma.py # class for models that don't take extra parameters
