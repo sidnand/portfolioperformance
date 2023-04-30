@@ -7,4 +7,8 @@ matlab_playground/
 todo.md
 config.txt
 test.py
+*.egg-info
+build/
+dist/
 portfolio_performance/.pypirc
+sp_sector.csv

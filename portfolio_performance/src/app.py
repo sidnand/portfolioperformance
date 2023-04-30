@@ -15,7 +15,6 @@ class App:
 
         @param path: path to the data file
         @param gammas: risk averse levels
-        @param omegas: 
         @param timeHorizon: time horizons for rolling window
         @param models: list of models to run
         @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
@@ -30,7 +29,6 @@ class App:
 
     def __init__(self, path: str,
                 gammas: list[int],
-                omegas: list[int],
                 timeHorizon: list[int],
                 models: list[Model],
                 delim: Literal[",", "\s+"] = ",",
@@ -49,7 +47,6 @@ class App:
 
         self.models = models
         self.gammas = gammas
-        self.omegas = omegas
         self.timeHorizon = timeHorizon
         self.windowType = windowType
 
@@ -148,7 +145,6 @@ class App:
             "riskFreeReturns": self.riskFreeReturns,
             "riskyReturns": self.riskyReturns,
             "gammas": self.gammas,
-            "omegas": self.omegas,
             "assetNames": self.assetNames,
             "withoutRiskFactorReturns": self.withoutRiskFactorReturns,
             "windowType": self.windowType,
