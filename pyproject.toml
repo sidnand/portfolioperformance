@@ -3,7 +3,7 @@ requires = ["setuptools"]
 
 [project]
 name = "portfolio-performance"
-version = "1.0.4"
+version = "1.0.0"
 authors = [
   { name="Siddharth Nand", email="snand233@gmail.com" },
 ]
