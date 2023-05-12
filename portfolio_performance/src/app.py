@@ -17,6 +17,7 @@ class App:
         @param gammas: risk averse levels
         @param timeHorizon: time horizons for rolling window
         @param models: list of models to run
+        @param dateRange: date range for the data file, default is [], which means no date range
         @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
         @param date: whether the data file has a date column, as the first column, default is False
         @param logScale: whether the data file is in log scale, default is False
@@ -31,8 +32,8 @@ class App:
                 gammas: list[int],
                 timeHorizon: list[int],
                 models: list[Model],
+                dateRange: list[str] = [],
                 delim: Literal[",", "\s+"] = ",",
-                date: bool = False,
                 logScale: bool = False,
                 riskFactorPositions: list[int] = [],
                 riskFreePosition: int = 0,
@@ -40,7 +41,7 @@ class App:
 
         self.path = path
         self.delim = delim
-        self.originalData = self.readFile(path, delim, date)
+        self.originalData = self.readFile(path, delim, dateRange)
 
         self.data, self.assetNames = self.getData()
         self.period = self.data.shape[0]
@@ -75,15 +76,22 @@ class App:
 
         @param path: path to the data file
         @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
-        @param date: whether the data file has a date column, as the first column, default is False
+        @param dateRange: date range for the data file, default is [], which means no date range
 
         @return: pandas DataFrame of the data file
     '''
-    def readFile(self, path: str, delim: str, date: bool) -> pd.DataFrame:
-        if date:
-            return pd.read_csv(path, delimiter=delim).iloc[:, 1:]
+    def readFile(self, path: str, delim: str, dateRange: list[str]) -> pd.DataFrame:
 
-        return pd.read_csv(path, delimiter=delim)
+        if dateRange != []:
+            dateRange = pd.to_datetime(dateRange, exact=False)
+
+            df = pd.read_csv(path, sep=delim, parse_dates=True, index_col=0)
+
+            mask = (df.index > dateRange[0]) & (df.index <= dateRange[1])
+
+            return df.loc[mask]
+        else:
+            return pd.read_csv(path, sep=delim, parse_dates=True, index_col=0)
 
     '''
         @brief Get the data from the pandas DataFrame
