@@ -11,4 +11,5 @@ test.py
 build/
 dist/
 portfolio_performance/.pypirc
-sp_sector.csv
+*.csv
+*.txt
