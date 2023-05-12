@@ -2,7 +2,7 @@
 requires = ["setuptools"]
 
 [project]
-name = "portfolio-performance"
+name = "portfolioperformance"
 version = "1.0.0"
 authors = [
   { name="Siddharth Nand", email="snand233@gmail.com" },
@@ -20,5 +20,5 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/sidnand/portfolio-performance"
-"Bug Tracker" = "https://github.com/sidnand/portfolio-performance/issues"
+"Homepage" = "https://github.com/sidnand/portfolioperformance"
+"Bug Tracker" = "https://github.com/sidnand/portfolioperformance/issues"

@@ -1,4 +1,4 @@
-# Portfolio_Performance
+# Portfolio Performance
 
 :construction:  This README is a work in progress
 
@@ -11,7 +11,7 @@ I have also developed a playground website for this package so you can easily ru
 
 ### Installation
 
-`pip install portfolio-performance`
+`pip install portfolioperformance`
 
 ### Models
 
@@ -35,7 +35,7 @@ macKinlayPastor = MacKinlayPastor("MacKinlay and Pastor")
 
 ```python
 import numpy as np
-from portfoliotest import *
+from portfolioperformance import *
 
 # Risk aversion levels
 GAMMAS = [1, 2, 3, 4, 5, 10]
@@ -66,7 +66,7 @@ sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
 
 ### Setup
 
-1. Clone project: `git clone https://github.com/sidnand/portfolio-performance`
+1. Clone project: `git clone https://github.com/sidnand/portfolioperformance`
 2. Install packages: `pip install -r requirements.txt`
 3. Make project: `setapp `
 4. Make changes!
