@@ -60,7 +60,7 @@ class App:
         self.n = self.riskyReturns.shape[1] + 1
 
         # number of risky variables
-        self.nRisky = self.n - len(riskFactorPositions)
+        self.nRisky = self.n - 1
         # total time period
         self.t = len(self.riskyReturns)
         # last time horizon
