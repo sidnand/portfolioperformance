@@ -1,4 +1,7 @@
+from datetime import date
+from io import StringIO
 from typing import *
+from urllib import parse
 
 import pandas as pd
 import numpy as np
@@ -32,6 +35,7 @@ class App:
                 gammas: list[int],
                 timeHorizon: list[int],
                 models: list[Model],
+                dateFormat: str = "%Y-%m-%d",
                 dateRange: list[str] = [],
                 delim: Literal[",", "\s+"] = ",",
                 logScale: bool = False,
@@ -41,7 +45,7 @@ class App:
 
         self.path = path
         self.delim = delim
-        self.originalData = self.readFile(path, delim, dateRange)
+        self.originalData = self.readFile(path, delim, dateFormat, dateRange)
 
         self.data, self.assetNames = self.getData()
         self.period = self.data.shape[0]
@@ -80,18 +84,21 @@ class App:
 
         @return: pandas DataFrame of the data file
     '''
-    def readFile(self, path: str, delim: str, dateRange: list[str]) -> pd.DataFrame:
+    def readFile(self, path: str, delim: str, dateFormat: str, dateRange: list[str]) -> pd.DataFrame:
+        
+        # check if path ends in .csv
+        if path[-4:] != ".csv": path = StringIO(path)
 
         if dateRange != []:
-            dateRange = pd.to_datetime(dateRange, exact=False)
+            dateRange = pd.to_datetime(dateRange, exact=False, format=dateFormat)
 
-            df = pd.read_csv(path, sep=delim, parse_dates=True, index_col=0)
+            df = pd.read_csv(path, sep=delim, parse_dates=True, index_col=0, date_parser=lambda x: pd.to_datetime(x, format=dateFormat))
 
             mask = (df.index > dateRange[0]) & (df.index <= dateRange[1])
 
             return df.loc[mask]
         else:
-            return pd.read_csv(path, sep=delim, parse_dates=True, index_col=0)
+            return pd.read_csv(path, sep=delim, parse_dates=True, index_col=0, date_parser=lambda x: pd.to_datetime(x, format=dateFormat))
 
     '''
         @brief Get the data from the pandas DataFrame
