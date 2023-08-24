@@ -24,8 +24,8 @@ class App:
         @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
         @param date: whether the data file has a date column, as the first column, default is False
         @param logScale: whether the data file is in log scale, default is False
-        @param riskFactorPos: list of positions of the risk factors in the data file, default is None, start at index 0
-        @param riskFreePos: position of the risk-free asset in the data file, default is 0, start at index 0
+        @param riskFactorPos: list of positions of the risk factors in the data file, default is None, start at pos 1, excluding date column
+        @param riskFreePos: position of the risk-free asset in the data file, default is 1, start at pos 1, excluding date column
 
         @return: App object
     '''
@@ -39,7 +39,7 @@ class App:
                 delim: Literal[",", "\s+"] = ",",
                 logScale: bool = False,
                 riskFactorPositions: list[int] = [],
-                riskFreePosition: int = 0) -> None:
+                riskFreePosition: int = 1) -> None:
 
         self.path = path
         self.delim = delim
@@ -93,7 +93,7 @@ class App:
         @return: pandas DataFrame of the data file
     '''
     def readFile(self, path: str, delim: str, dateFormat: str, dateRange: list[str]) -> pd.DataFrame:
-        
+
         # check if path ends in .csv
         if path[-4:] != ".csv": path = StringIO(path)
 
@@ -135,6 +135,12 @@ class App:
     '''
 
     def getRiskFreeReturns(self, logScale: bool, riskFreePosition:int) -> np.ndarray:
+        riskFreePosition -= 1
+        if riskFreePosition < 0:
+            raise Exception("Risk-free position must be greater than 0")
+        if riskFreePosition > self.data.shape[1] - 1:
+            raise Exception("Risk-free position must be less than the number of columns")
+        
         if logScale:
             return np.exp(self.data[:, riskFreePosition]) - 1
 
@@ -151,6 +157,20 @@ class App:
     '''
 
     def getRiskyReturns(self, logScale: bool, riskFactor: list, riskFreePosition: int) -> np.ndarray and np.ndarray:
+        riskFreePosition -= 1
+        riskFactor = [i - 1 for i in riskFactor]
+        
+        if riskFreePosition < 0:
+            raise Exception("Risk-free position must be greater than 0")
+        if riskFreePosition > self.data.shape[1] - 1:
+            raise Exception("Risk-free position must be less than the number of columns")
+        
+        if riskFactor:
+            if any(i < 0 for i in riskFactor):
+                raise Exception("Risk factor position must be greater than 0")
+            if any(i > self.data.shape[1] - 1 for i in riskFactor):
+                raise Exception("Risk factor position must be less than the number of columns")
+
         data = np.delete(self.data, riskFreePosition, 1)
         withoutRiskFactorReturns = None
 
