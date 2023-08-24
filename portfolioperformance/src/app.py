@@ -26,7 +26,6 @@ class App:
         @param logScale: whether the data file is in log scale, default is False
         @param riskFactorPos: list of positions of the risk factors in the data file, default is None, start at index 0
         @param riskFreePos: position of the risk-free asset in the data file, default is 0, start at index 0
-        @param windowType: type of window, default is "Rolling", other option is "Increasing"
 
         @return: App object
     '''
@@ -40,8 +39,7 @@ class App:
                 delim: Literal[",", "\s+"] = ",",
                 logScale: bool = False,
                 riskFactorPositions: list[int] = [],
-                riskFreePosition: int = 0,
-                windowType: Literal["Rolling", "Increasing"] = "Rolling") -> None:
+                riskFreePosition: int = 0) -> None:
 
         self.path = path
         self.delim = delim
@@ -52,14 +50,12 @@ class App:
 
         self.models = models
         self.gammas = gammas
-        self.timeHorizon = timeHorizon
-        self.windowType = windowType
+        self.timeHorizon = self.getTimeHorizon(timeHorizon, self.originalData)
 
         # risk-free asset column
         self.riskFreeReturns = self.getRiskFreeReturns(logScale, riskFreePosition)
         # risky asset column, includes risk factor
-        self.riskyReturns, self.withoutRiskFactorReturns = self.getRiskyReturns(
-            logScale, riskFactorPositions, riskFreePosition)
+        self.riskyReturns, self.withoutRiskFactorReturns = self.getRiskyReturns(logScale, riskFactorPositions, riskFreePosition)
 
         self.n = self.riskyReturns.shape[1] + 1
 
@@ -74,6 +70,18 @@ class App:
 
         self.initModels()
         self.run()
+        
+    def getTimeHorizon(self, timeHorizon: list[int], originalData: pd.DataFrame) -> list[int]:
+        print(originalData.shape[0])
+        
+        # validate time horizon
+        if not all(i > originalData.shape[1] for i in timeHorizon):
+            raise Exception("Time horizon must be greater than the number of assets")
+        
+        if not all(i < originalData.shape[0] - 1 for i in timeHorizon):
+            raise Exception("Time horizon must be less than the number of columns - 1")
+        
+        return timeHorizon
 
     '''
         @brief Read the data file into a pandas DataFrame
@@ -92,13 +100,18 @@ class App:
         if dateRange != []:
             dateRange = pd.to_datetime(dateRange, exact=False, format=dateFormat)
 
-            df = pd.read_csv(path, sep=delim, parse_dates=True, index_col=0, date_parser=lambda x: pd.to_datetime(x, format=dateFormat))
+            date_parser = lambda x: pd.to_datetime(x, format=dateFormat)
+            df = pd.read_csv(path, sep=delim, parse_dates=True, index_col=0, date_parser=date_parser)
 
             mask = (df.index > dateRange[0]) & (df.index <= dateRange[1])
+            new_df = df.loc[mask]
+            
+            if new_df.empty:
+                raise Exception("Date range is not within the range of the data")
 
-            return df.loc[mask]
+            return new_df
         else:
-            return pd.read_csv(path, sep=delim, parse_dates=True, index_col=0, date_parser=lambda x: pd.to_datetime(x, format=dateFormat))
+            return pd.read_csv(path, sep=delim, parse_dates=True, index_col=0)
 
     '''
         @brief Get the data from the pandas DataFrame
@@ -137,7 +150,7 @@ class App:
         @return: numpy array of the risky returns without the risk factors
     '''
 
-    def getRiskyReturns(self, logScale: list, riskFactor: list, riskFreePosition: int) -> np.ndarray and np.ndarray:
+    def getRiskyReturns(self, logScale: bool, riskFactor: list, riskFreePosition: int) -> np.ndarray and np.ndarray:
         data = np.delete(self.data, riskFreePosition, 1)
         withoutRiskFactorReturns = None
 
@@ -161,8 +174,7 @@ class App:
             "riskyReturns": self.riskyReturns,
             "gammas": self.gammas,
             "assetNames": self.assetNames,
-            "withoutRiskFactorReturns": self.withoutRiskFactorReturns,
-            "windowType": self.windowType,
+            "withoutRiskFactorReturns": self.withoutRiskFactorReturns
         }
 
         for model in self.models:
@@ -179,9 +191,6 @@ class App:
         @return: dictionary of the statistics
     '''
     def getStats(self, riskFreeSubset, riskySubset, subset, nPoints) -> dict[str, np.ndarray or float]:
-        meanRF = np.mean(riskFreeSubset)
-        meanR = np.mean(riskySubset, axis = 0)
-
         mu = np.append(np.array([np.mean(riskFreeSubset)]),
                        np.vstack(riskySubset.mean(axis = 0)))
         mu = np.expand_dims(mu, axis = 1)

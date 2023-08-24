@@ -10,6 +10,7 @@ test.py
 *.egg-info
 build/
 dist/
+data/
 portfolio_performance/.pypirc
 *.csv
 *.txt

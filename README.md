@@ -51,8 +51,14 @@ models = [
     # <add other list of models>
 ]
 
-app = App(<data path>, GAMMAS, TIME_HORIZON,
-              models, date=<true or false>, riskFactorPositions=[0-indexed positions for risk factor column], riskFreePosition=<0-indexed, risk free asset column>)
+app = App(<data path>, GAMMAS, TIME_HORIZON, models, dateFormat=<pandas datetime format>,
+            dateRange=["01011990", "01012010"], date=<true or false>,
+            riskFactorPositions=[0-indexed positions for risk factor column],
+            riskFreePosition=<0-indexed, risk free asset column>)
+
+app = App(path, data["gammas"], data["timeHorizons"], selectedModels,
+              dateFormat = data["dateFormat"], dateRange=[data["dateRangeStart"], data["dateRangeEnd"]],
+              riskFactorPositions=data["riskFactor"], riskFreePosition=data["riskFree"], delim=delimType)
 
 sr = app.getSharpeRatios()
 sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
