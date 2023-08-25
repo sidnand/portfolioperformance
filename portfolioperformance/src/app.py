@@ -23,7 +23,6 @@ class App:
         @param dateRange: date range for the data file, default is [], which means no date range
         @param delim: delimiter for the data file, default is ",", other option is "\s+" for spaces and tabs
         @param date: whether the data file has a date column, as the first column, default is False
-        @param logScale: whether the data file is in log scale, default is False
         @param riskFactorPos: list of positions of the risk factors in the data file, default is None, start at pos 1, excluding date column
         @param riskFreePos: position of the risk-free asset in the data file, default is 1, start at pos 1, excluding date column
 
@@ -37,7 +36,6 @@ class App:
                 dateFormat: str = "%Y-%m-%d",
                 dateRange: list[str] = [],
                 delim: Literal[",", "\s+"] = ",",
-                logScale: bool = False,
                 riskFactorPositions: list[int] = [],
                 riskFreePosition: int = 1) -> None:
 
@@ -53,9 +51,9 @@ class App:
         self.timeHorizon = self.getTimeHorizon(timeHorizon, self.originalData)
 
         # risk-free asset column
-        self.riskFreeReturns = self.getRiskFreeReturns(logScale, riskFreePosition)
+        self.riskFreeReturns = self.getRiskFreeReturns(riskFreePosition)
         # risky asset column, includes risk factor
-        self.riskyReturns, self.withoutRiskFactorReturns = self.getRiskyReturns(logScale, riskFactorPositions, riskFreePosition)
+        self.riskyReturns = self.getRiskyReturns(riskFactorPositions, riskFreePosition)
 
         self.n = self.riskyReturns.shape[1] + 1
 
@@ -98,10 +96,11 @@ class App:
         if dateRange != []:
             dateRange = pd.to_datetime(dateRange, exact=False, format=dateFormat)
 
+
             date_parser = lambda x: pd.to_datetime(x, format=dateFormat)
             df = pd.read_csv(path, sep=delim, parse_dates=True, index_col=0, date_parser=date_parser)
 
-            mask = (df.index > dateRange[0]) & (df.index <= dateRange[1])
+            mask = (df.index >= dateRange[0]) & (df.index <= dateRange[1])
             new_df = df.loc[mask]
             
             if new_df.empty:
@@ -127,41 +126,30 @@ class App:
     '''
         @brief Get the risk-free returns
 
-        @param logScale: whether the data file is in log scale, default is False
-
         @return: numpy array of the risk-free returns
     '''
 
-    def getRiskFreeReturns(self, logScale: bool, riskFreePosition:int) -> np.ndarray:
+    def getRiskFreeReturns(self, riskFreePosition:int) -> np.ndarray:
         riskFreePosition -= 1
         if riskFreePosition < 0:
             raise Exception("Risk-free position must be greater than 0")
         if riskFreePosition > self.data.shape[1] - 1:
             raise Exception("Risk-free position must be less than the number of columns")
-        
-        if logScale:
-            return np.exp(self.data[:, riskFreePosition]) - 1
 
         return self.data[:, riskFreePosition]
 
     '''
         @brief Get the risky returns
 
-        @param logScale: whether the data file is in log scale, default is False
         @param riskFactorPositions: list of positions of the risk factors in the data file, default is None, start at index 0
 
         @return: numpy array of the risky returns
         @return: numpy array of the risky returns without the risk factors
     '''
 
-    def getRiskyReturns(self, logScale: bool, riskFactor: list, riskFreePosition: int) -> np.ndarray and np.ndarray:
+    def getRiskyReturns(self, riskFactor: list, riskFreePosition: int) -> np.ndarray and np.ndarray:
         riskFreePosition -= 1
         riskFactor = [i - 1 for i in riskFactor]
-        
-        if riskFreePosition < 0:
-            raise Exception("Risk-free position must be greater than 0")
-        if riskFreePosition > self.data.shape[1] - 1:
-            raise Exception("Risk-free position must be less than the number of columns")
         
         if riskFactor:
             if any(i < 0 for i in riskFactor):
@@ -170,13 +158,8 @@ class App:
                 raise Exception("Risk factor position must be less than the number of columns")
 
         data = np.delete(self.data, riskFreePosition, 1)
-        withoutRiskFactorReturns = None
 
-        riskyReturns = np.exp(data[:, 1:]) - 1 if logScale else data[:, 1:]
-        if riskFactor:
-            withoutRiskFactorReturns = np.exp(np.delete(data, riskFactor, 1)) - 1 if logScale else np.delete(data, riskFactor, 1)
-
-        return riskyReturns, withoutRiskFactorReturns
+        return data
 
     '''
         @brief Initalize the models with the following parameters
@@ -191,8 +174,7 @@ class App:
             "riskFreeReturns": self.riskFreeReturns,
             "riskyReturns": self.riskyReturns,
             "gammas": self.gammas,
-            "assetNames": self.assetNames,
-            "withoutRiskFactorReturns": self.withoutRiskFactorReturns
+            "assetNames": self.assetNames
         }
 
         for model in self.models:
