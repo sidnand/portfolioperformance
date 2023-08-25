@@ -12,8 +12,7 @@ class ModelNoGamma(Model):
 
     def _init(self, nRisky, period, timeHorizon, riskFreeReturns, riskyReturns):
         self.weights = np.empty((nRisky, period - timeHorizon[-1]))
-        self.weightsBuyHold = np.empty(
-            (nRisky, period - timeHorizon[-1]))
+        self.weightsBuyHold = np.empty((nRisky, period - timeHorizon[-1]))
         self.outSample = np.empty((1, period - timeHorizon[-1]))
 
         self.riskFreeReturns = riskFreeReturns
@@ -33,12 +32,10 @@ class ModelNoGamma(Model):
         if currentSubset == 0:
             self.weightsBuyHold[:, currentSubset] = alpha[:, 0]
         else:
-            self.weightsBuyHold[:, currentSubset] = self.buyHold(
-                self.weights[:, currentSubset - 1], currentSubset, period)
+            self.weightsBuyHold[:, currentSubset] = self.buyHold(self.weights[:, currentSubset - 1], currentSubset, period)
 
         if (nSubsets > 1):
-            self.outSample[:, currentSubset] = self.outOfSampleReturns(
-                alpha, currentSubset, period)[:, 0]
+            self.outSample[:, currentSubset] = self.outOfSampleReturns(alpha, currentSubset, period)[:, 0]
 
     def _statisticalSignificanceWRTBenchmark(self, benchmark, nSubsets):
         z = jobsonKorkieZStat(benchmark, self.outSample, nSubsets)

@@ -11,10 +11,8 @@ class ModelGamma(Model):
         super().__init__(name)
 
     def _init(self, nRisky, period, timeHorizon, riskFreeReturns, riskyReturns, gammas):
-        self.weights = np.empty(
-            (nRisky, period - timeHorizon[-1], len(gammas)))
-        self.weightsBuyHold = np.empty(
-            (nRisky, period - timeHorizon[-1], len(gammas)))
+        self.weights = np.empty((nRisky, period - timeHorizon[-1], len(gammas)))
+        self.weightsBuyHold = np.empty((nRisky, period - timeHorizon[-1], len(gammas)))
         self.outSample = np.empty((len(gammas), period - timeHorizon[-1]))
 
         self.riskFreeReturns = riskFreeReturns
@@ -33,8 +31,7 @@ class ModelGamma(Model):
 
             alpha = self.alpha(**filter)
             self.weights[:, currentSubset, i] = alpha[:, 0]
-            self.outSample[i, currentSubset] = self.outOfSampleReturns(
-                alpha, currentSubset, period)[:, 0]
+            self.outSample[i, currentSubset] = self.outOfSampleReturns(alpha, currentSubset, period)[:, 0]
 
         if currentSubset == 1:
             self.weightsBuyHold[:, currentSubset, i] = alpha[:, 0]

@@ -71,9 +71,7 @@ class App:
         self.initModels()
         self.run()
         
-    def getTimeHorizon(self, timeHorizon: list[int], originalData: pd.DataFrame) -> list[int]:
-        print(originalData.shape[0])
-        
+    def getTimeHorizon(self, timeHorizon: list[int], originalData: pd.DataFrame) -> list[int]:        
         # validate time horizon
         if not all(i > originalData.shape[1] for i in timeHorizon):
             raise Exception("Time horizon must be greater than the number of assets")
