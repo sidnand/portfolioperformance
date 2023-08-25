@@ -1,9 +1,6 @@
 # Portfolio Performance
 
-:construction:  This README is a work in progress
-
-Tool to  test the out-of-sample performance of portfolio optimization models. Based on the paper: [Optimal Versus Naive Diversification:
-How Inefficient is the 1/N Portfolio Strategy?](http://faculty.london.edu/avmiguel/DeMiguel-Garlappi-Uppal-RFS.pdf) by Victor DeMiguel, Lorenzo Garlappi and Raman Uppal
+Tool to  test the out-of-sample performance of portfolio optimization models. Based on the paper: [Optimal Versus Naive Diversification](https://www.dropbox.com/s/ty11g7fi3cqbtfq/DGU-RFS-Final.pdf?dl=0):
 
 I have also developed a playground website for this package so you can easily run these models on your own data. [Link to website](https://sidnand.github.io/Portfolio-Optimization-Interface/)
 
@@ -52,13 +49,9 @@ models = [
 ]
 
 app = App(<data path>, GAMMAS, TIME_HORIZON, models, dateFormat=<pandas datetime format>,
-            dateRange=["01011990", "01012010"], date=<true or false>,
-            riskFactorPositions=[0-indexed positions for risk factor column],
-            riskFreePosition=<0-indexed, risk free asset column>)
-
-app = App(path, data["gammas"], data["timeHorizons"], selectedModels,
-              dateFormat = data["dateFormat"], dateRange=[data["dateRangeStart"], data["dateRangeEnd"]],
-              riskFactorPositions=data["riskFactor"], riskFreePosition=data["riskFree"], delim=delimType)
+            dateRange=["01011990", "01012010"], delim=<"," or "\s+">,
+            riskFactorPositions=[positions for risk factor column],
+            riskFreePosition=<risk free asset column>)
 
 sr = app.getSharpeRatios()
 sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
@@ -66,7 +59,40 @@ sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
 
 ## API
 
-:construction: Coming soon
+### App Class
+
+#### Parameters
+
+- `path` (`str`): Path to a `csv` file
+- `gammas` (`list[int]`): List of gammas values
+- `timeHorizon` (`list[int]`): List of time horizons
+- `models` (`list[Model]`): List of Model classes
+- `dateFormat` (`str`): Pandas date time format, default = "%Y-%m-%d"
+- `dateRange` (`[str, str]`): Start and end date, default = []
+- `delim` (`str`): Delimitation type, either "," or "\s+" (whitespace), default = ","
+- `logScale` (`bool`): Whether or not data is in log-scale, default = False
+- `riskFactorPositions` (`list`): Risk factor asset column positions (where position 1 is the date column), default = []
+- `riskFreePosition` (`int`): Risk free asset column position, default = 1
+
+#### Methods
+
+##### `getSharpeRatios() -> dict[str, float]`
+
+Get the sharpe ratios
+
+- Returns: - `dict[str, float]`: A dictionary with model name and sharpe ratio as a key-valued pair
+
+##### `getStatisticalSignificanceWRTBenchmark(benchmark) -> dict[str, float]`
+
+Get the statistical significance with respect to a benchmark model
+
+* Parameters:
+  
+  * `benchmark` (`Model`): Benchmark model
+- Returns:
+  - `dict[str, float]`: A dictionary with model name and sharpe ratio as a key-valued pair
+
+
 
 ## Development
 
@@ -93,7 +119,6 @@ sig = app.getStatisticalSignificanceWRTBenchmark(benchmark)
         |-- quadprog.py # quadratic programming
         |-- sharedOptions.py # models options that are in common with >2 models
         |-- statistics.py # statistics functions
-
 ```
 
 ### Create Pull-Request

@@ -39,7 +39,6 @@ class Model():
 
     def runInSample(self, params):
         pass
-        # raise NotImplementedError("Model does not implement runInSample method")
 
     def sharpeRatio(self):
         return sharpeRato(self.outSample)
