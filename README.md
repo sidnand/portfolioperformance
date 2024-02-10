@@ -2,7 +2,7 @@
 
 Tool to  test the out-of-sample performance of portfolio optimization models. Based on the paper: [Optimal Versus Naive Diversification](https://www.dropbox.com/s/ty11g7fi3cqbtfq/DGU-RFS-Final.pdf?dl=0):
 
-I have also developed a playground website for this package so you can easily run these models on your own data. [Link to website](https://sidnand.github.io/Portfolio-Optimization-Interface/)
+I have also developed a playground website for this package so you can easily run these models on your own data. [Link to website](https://sidnand.github.io/Portfolio-Lab/)
 
 ## Usage
 
