@@ -49,7 +49,7 @@ models = [
 ]
 
 app = App(<data path>, GAMMAS, TIME_HORIZON, models, dateFormat=<pandas datetime format>,
-            dateRange=["01011990", "01012010"], delim=<"," or "\s+">,
+            dateRange=["01011990", "01012010"], delim=<"," or "\\s+">,
             riskFactorPositions=[positions for risk factor column],
             riskFreePosition=<risk free asset column>)
 
@@ -100,8 +100,7 @@ Get the statistical significance with respect to a benchmark model
 
 1. Clone project: `git clone https://github.com/sidnand/portfolioperformance`
 2. Install packages: `pip install -r requirements.txt`
-3. Make project: `setapp `
-4. Make changes!
+3. Make changes!
 
 ### Folder Structure
 
@@ -130,3 +129,14 @@ Please create a pull-request to include your changes onto this repo. These chang
 3. Update version number in ``setup.py``. Please use the Semantic Versioning 2.0.0 system. [Click to learn more](https://semver.org/).
 4. Run ``python setup.py sdist bdist_wheel`` to create a python wheel.
 5. Create a pull-request!
+
+## Release History
+
+- 1.1.0
+  - `quadprog == 0.1.12` update
+  - Update code for latest `pandas` version
+
+- 1.0.0
+  - Initial release of the package
+  - `Python <= 3.9.9`
+  - `quadprog <= 0.1.11`

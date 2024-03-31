@@ -1,5 +1,5 @@
 numpy
 pandas
 scipy
-qpsolvers
-quadprog
+qpsolvers>=4.3.1
+quadprog>=0.1.12

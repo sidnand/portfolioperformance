@@ -35,7 +35,7 @@ class App:
                 models: list[Model],
                 dateFormat: str = "%Y-%m-%d",
                 dateRange: list[str] = [],
-                delim: Literal[",", "\s+"] = ",",
+                delim: Literal[",", "\\s+"] = ",",
                 riskFactorPositions: list[int] = [],
                 riskFreePosition: int = 1) -> None:
 
