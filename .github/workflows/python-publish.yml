@@ -17,7 +17,8 @@ jobs:
         with:
           python-version: '3.x'
       - name: Publish package
-        uses: pypa/gh-action-pypi-publish@v1.1.0
+        run: |
+          python -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/portfolioperformance-1.1.0-py3-none-any.whl
         with:
-          user: __token__
-          password: ${{ secrets.PORTFOLIOPERFORMANCE_PYPI_API_TOKEN }}
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PORTFOLIOPERFORMANCE_PYPI_API_TOKEN }}
